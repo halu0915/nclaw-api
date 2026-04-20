@@ -5,10 +5,7 @@ import { loginCustomer, registerCustomer, getCustomerPublic } from "./customers"
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
-    Google({
-      clientId: process.env.AUTH_GOOGLE_ID || process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.AUTH_GOOGLE_SECRET || process.env.GOOGLE_CLIENT_SECRET!,
-    }),
+    Google,
     Credentials({
       name: "Email",
       credentials: {
@@ -34,7 +31,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ],
   callbacks: {
     async signIn({ user, account }) {
-      // Auto-register Google users on first login
       if (account?.provider === "google" && user.email) {
         const login = loginCustomer(user.email, "__google_oauth__");
         if ("error" in login && login.error === "帳號不存在") {
