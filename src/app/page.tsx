@@ -103,25 +103,12 @@ export default function Home() {
         <div className="text-center mb-16">
           <h1 className="text-5xl font-bold mb-4">{l.hero}</h1>
           <p className="text-xl text-gray-400 max-w-2xl mx-auto">{l.heroSub}</p>
-        </div>
-
-        {/* Quick Start */}
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-8 mb-12">
-          <h2 className="text-2xl font-semibold mb-4">{l.quickStart}</h2>
-          <div className="bg-gray-950 rounded-lg p-4 sm:p-6 overflow-x-auto">
-            <code className="text-xs sm:text-sm text-gray-300 whitespace-pre block">
-{`curl https://api.nplusstar.ai/v1/chat/completions \\
-  -H "Authorization: Bearer nplus_sk_..." \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "model": "anthropic/claude-sonnet-4-6",
-    "messages": [{
-      "role": "user",
-      "content": "估算水電配管費用"
-    }]
-  }'`}
-            </code>
-          </div>
+          <a
+            href="/chat"
+            className="inline-block mt-8 px-8 py-4 bg-blue-600 hover:bg-blue-500 rounded-xl text-lg font-semibold transition-colors"
+          >
+            {lang === "zh" ? "立即體驗 AI 助手" : "Try AI Assistant Now"}
+          </a>
         </div>
 
         {/* Features */}
