@@ -24,7 +24,12 @@ export default function PlansPage() {
   useEffect(() => {
     fetch("/api/customer/me")
       .then((res) => res.ok ? res.json() : null)
-      .then((data) => { if (data) setCurrentPlan(data.customer.plan); })
+      .then(async (data) => {
+        if (data) { setCurrentPlan(data.customer.plan); return; }
+        // Fallback: check next-auth session
+        const s = await fetch("/api/auth/session").then(r => r.json()).catch(() => null);
+        if (s?.user) setCurrentPlan("free");
+      })
       .catch(() => {});
   }, []);
 

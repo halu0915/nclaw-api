@@ -24,7 +24,21 @@ export default function BillingPage() {
     fetch("/api/customer/me")
       .then((res) => { if (!res.ok) throw new Error(); return res.json(); })
       .then((data) => setCustomer(data.customer))
-      .catch(() => router.push("/login"));
+      .catch(async () => {
+        const s = await fetch("/api/auth/session").then(r => r.json()).catch(() => null);
+        if (s?.user) {
+          setCustomer({
+            companyName: s.user.name || "Google 用戶",
+            plan: "free",
+            planPrice: 0,
+            tokensUsed: 0,
+            tokenQuota: 100000,
+            createdAt: new Date().toISOString(),
+          });
+        } else {
+          router.push("/login");
+        }
+      });
   }, [router]);
 
   if (!customer) {
