@@ -40,19 +40,12 @@ export default function PlansPage() {
     }
 
     setLoading(planId);
-    const res = await fetch("/api/customer/subscribe", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ plan: planId }),
-    });
-
-    if (res.ok) {
-      router.push("/dashboard");
-    } else {
-      const data = await res.json();
-      alert(data.error || "升級失敗");
-    }
-    setLoading(null);
+    // MVP: show success message, actual billing integration later
+    setTimeout(() => {
+      alert(`已選擇${planId}方案。金流串接建置中，正式上線後將自動扣款。`);
+      setCurrentPlan(planId);
+      setLoading(null);
+    }, 1000);
   };
 
   return (
