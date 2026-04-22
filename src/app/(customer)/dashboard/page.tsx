@@ -52,8 +52,10 @@ export default function DashboardPage() {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
     document.cookie = "nclaw_token=; path=/; max-age=0";
+    // Also sign out from next-auth
+    try { await fetch("/api/auth/signout", { method: "POST" }); } catch {}
     router.push("/login");
   };
 
