@@ -4,6 +4,7 @@ import Credentials from "next-auth/providers/credentials";
 import { loginCustomer, registerCustomer, getCustomerPublic } from "./customers";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  debug: true,
   trustHost: true,
   providers: [
     Google({
