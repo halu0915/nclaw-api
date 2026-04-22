@@ -80,9 +80,24 @@ export default function DashboardPage() {
 
   const logout = async () => {
     document.cookie = "nclaw_token=; path=/; max-age=0";
-    // Also sign out from next-auth
-    try { await fetch("/api/auth/signout", { method: "POST" }); } catch {}
-    router.push("/login");
+    // Sign out from next-auth with CSRF token
+    try {
+      const csrfRes = await fetch("/api/auth/csrf");
+      const { csrfToken } = await csrfRes.json();
+      await fetch("/api/auth/signout", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `csrfToken=${csrfToken}`,
+      });
+    } catch {}
+    // Clear all auth cookies manually
+    document.cookie.split(";").forEach((c) => {
+      const name = c.trim().split("=")[0];
+      if (name.includes("authjs") || name.includes("next-auth")) {
+        document.cookie = `${name}=; path=/; max-age=0; secure`;
+      }
+    });
+    window.location.href = "/login";
   };
 
   if (loading) {
