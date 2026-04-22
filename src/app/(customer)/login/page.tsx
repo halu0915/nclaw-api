@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { signIn } from "next-auth/react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -10,29 +9,59 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Check if already logged in
+  useEffect(() => {
+    fetch("/api/auth/session")
+      .then((r) => r.json())
+      .then((s) => { if (s?.user) router.push("/dashboard"); })
+      .catch(() => {});
+  }, [router]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
-    const result = await signIn("credentials", {
-      email: form.email,
-      password: form.password,
-      redirect: false,
+    const res = await fetch("/api/customer/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form),
     });
 
+    const data = await res.json();
     setLoading(false);
 
-    if (result?.error) {
-      setError("Email 或密碼錯誤");
+    if (!res.ok) {
+      setError(data.error || "Email 或密碼錯誤");
       return;
     }
 
     router.push("/dashboard");
   };
 
-  const handleGoogleLogin = () => {
-    signIn("google", { callbackUrl: "/dashboard" });
+  const handleGoogleLogin = async () => {
+    // Get CSRF token first, then POST to signin
+    const csrfRes = await fetch("/api/auth/csrf");
+    const { csrfToken } = await csrfRes.json();
+
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = "/api/auth/signin/google";
+
+    const csrfInput = document.createElement("input");
+    csrfInput.type = "hidden";
+    csrfInput.name = "csrfToken";
+    csrfInput.value = csrfToken;
+    form.appendChild(csrfInput);
+
+    const callbackInput = document.createElement("input");
+    callbackInput.type = "hidden";
+    callbackInput.name = "callbackUrl";
+    callbackInput.value = "/dashboard";
+    form.appendChild(callbackInput);
+
+    document.body.appendChild(form);
+    form.submit();
   };
 
   return (

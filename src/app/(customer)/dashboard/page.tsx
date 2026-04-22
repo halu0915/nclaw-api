@@ -34,13 +34,39 @@ export default function DashboardPage() {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
+    // Try our customer API first, then fall back to next-auth session
     fetch("/api/customer/me")
       .then((res) => {
         if (!res.ok) throw new Error("未登入");
         return res.json();
       })
       .then((data) => setCustomer(data.customer))
-      .catch(() => router.push("/login"))
+      .catch(async () => {
+        // Check next-auth session
+        try {
+          const sessionRes = await fetch("/api/auth/session");
+          const session = await sessionRes.json();
+          if (session?.user?.email) {
+            // Show Google session data as customer
+            setCustomer({
+              id: "google-user",
+              email: session.user.email,
+              companyName: session.user.name || "Google 用戶",
+              contactName: session.user.name || "用戶",
+              plan: "free",
+              apiKey: "nplus_sk_google_login_pending_setup",
+              status: "trial",
+              tokenQuota: 100000,
+              tokensUsed: 0,
+              createdAt: new Date().toISOString(),
+              trialEndsAt: new Date(Date.now() + 14 * 86400000).toISOString(),
+              planPrice: 0,
+            });
+            return;
+          }
+        } catch {}
+        router.push("/login");
+      })
       .finally(() => setLoading(false));
   }, [router]);
 
