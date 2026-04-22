@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCustomerByToken, updatePlan, getCustomerPublic, registerCustomer, loginCustomer } from "@/lib/customers";
-import { auth } from "@/lib/auth-config";
 
 export async function POST(req: NextRequest) {
   let customerId: string | null = null;
@@ -12,25 +11,29 @@ export async function POST(req: NextRequest) {
     if (customer) customerId = customer.id;
   }
 
-  // Method 2: Check next-auth session
+  // Method 2: Check next-auth session via session endpoint
   if (!customerId) {
-    const session = await auth();
-    if (session?.user?.email) {
-      const login = loginCustomer(session.user.email, "__google_oauth__");
-      if ("error" in login) {
-        // Auto-register
-        const reg = registerCustomer({
-          email: session.user.email,
-          password: "__google_oauth__",
-          companyName: session.user.name || "未設定",
-          contactName: session.user.name || "用戶",
-          phone: "",
-        });
-        if (!("error" in reg)) customerId = reg.customer.id;
-      } else {
-        customerId = login.customer.id;
+    try {
+      const sessionRes = await fetch(new URL("/api/auth/session", req.url).toString(), {
+        headers: { cookie: req.headers.get("cookie") || "" },
+      });
+      const session = await sessionRes.json();
+      if (session?.user?.email) {
+        const login = loginCustomer(session.user.email, "__google_oauth__");
+        if ("error" in login) {
+          const reg = registerCustomer({
+            email: session.user.email,
+            password: "__google_oauth__",
+            companyName: session.user.name || "未設定",
+            contactName: session.user.name || "用戶",
+            phone: "",
+          });
+          if (!("error" in reg)) customerId = reg.customer.id;
+        } else {
+          customerId = login.customer.id;
+        }
       }
-    }
+    } catch {}
   }
 
   if (!customerId) {
