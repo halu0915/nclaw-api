@@ -36,22 +36,29 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ],
   callbacks: {
     async signIn({ user, account }) {
-      if (account?.provider === "google" && user.email) {
-        const login = loginCustomer(user.email, "__google_oauth__");
-        if ("error" in login && login.error === "帳號不存在") {
-          registerCustomer({
-            email: user.email,
-            password: "__google_oauth__" + Math.random().toString(36),
-            companyName: user.name || "未設定",
-            contactName: user.name || "用戶",
-            phone: "",
-          });
+      try {
+        if (account?.provider === "google" && user.email) {
+          const login = loginCustomer(user.email, "__google_oauth__");
+          if ("error" in login) {
+            // User doesn't exist or wrong password — register
+            registerCustomer({
+              email: user.email,
+              password: "__google_oauth__",
+              companyName: user.name || "未設定",
+              contactName: user.name || "用戶",
+              phone: "",
+            });
+          }
         }
+      } catch (e) {
+        console.error("signIn callback error:", e);
       }
       return true;
     },
-    async session({ session }) {
-      return session;
+    async redirect({ url, baseUrl }) {
+      // After sign in, go to dashboard
+      if (url.startsWith(baseUrl)) return url;
+      return baseUrl + "/dashboard";
     },
   },
   pages: {
