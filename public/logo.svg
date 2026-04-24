@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <rect width="400" height="400" rx="40" fill="#1c1917"/>
+  <!-- N letter -->
+  <text x="80" y="260" font-family="Helvetica Neue, Arial" font-size="200" font-weight="200" fill="white">N</text>
+  <!-- + with star at center -->
+  <line x1="270" y1="140" x2="270" y2="280" stroke="#c8a97e" stroke-width="8" stroke-linecap="round"/>
+  <line x1="200" y1="210" x2="340" y2="210" stroke="#c8a97e" stroke-width="8" stroke-linecap="round"/>
+  <!-- Star at intersection -->
+  <polygon points="270,175 275,200 300,200 280,215 288,240 270,225 252,240 260,215 240,200 265,200" fill="#c8a97e"/>
+  <!-- Subtle glow -->
+  <circle cx="270" cy="210" r="20" fill="#c8a97e" opacity="0.15"/>
+  <text x="80" y="340" font-family="Helvetica Neue, Arial" font-size="28" font-weight="300" fill="rgba(255,255,255,0.25)" letter-spacing="16">N + S T A R</text>
+</svg>
