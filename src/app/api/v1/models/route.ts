@@ -3,7 +3,7 @@ import { validateApiKey } from "@/lib/auth";
 import { getAvailableModels } from "@/lib/pricing";
 
 export async function GET(req: NextRequest) {
-  const auth = validateApiKey(req);
+  const auth = await validateApiKey(req);
   if (!auth.valid) {
     return NextResponse.json(
       { error: { message: auth.error, type: "authentication_error" } },
@@ -18,6 +18,9 @@ export async function GET(req: NextRequest) {
       id: m.id,
       object: "model",
       owned_by: m.id.split("/")[0],
+      provider: m.provider,
+      context_window: m.contextWindow,
+      supports_cache: m.supportsCache,
       pricing: m.pricing,
     })),
   });

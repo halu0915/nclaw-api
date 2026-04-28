@@ -1,22 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-
-interface CustomerData {
-  id: string;
-  email: string;
-  companyName: string;
-  contactName: string;
-  plan: string;
-  apiKey: string;
-  status: string;
-  tokenQuota: number;
-  tokensUsed: number;
-  createdAt: string;
-  trialEndsAt: string;
-  planPrice: number;
-}
+import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
+import { useCustomer } from "../layout";
+import StatCard from "@/components/StatCard";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 const PLAN_LABELS: Record<string, string> = {
   free: "免費試用",
@@ -26,203 +21,408 @@ const PLAN_LABELS: Record<string, string> = {
   enterprise: "企業版",
 };
 
+interface UsageRecord {
+  id: string;
+  timestamp: string;
+  model: string;
+  provider: string;
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+  costUsd: number;
+  billedNtd: number;
+  latencyMs: number;
+  status: string;
+}
+
+interface BillingSummary {
+  totalRequests: number;
+  totalTokens: number;
+  totalBilledNtd: number;
+  totalCostUsd: number;
+  avgLatencyMs: number;
+}
+
+interface DailyPoint {
+  date: string;
+  requests: number;
+}
+
+function CustomTooltip({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean;
+  payload?: { value: number }[];
+  label?: string;
+}) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 shadow-xl">
+      <p className="text-xs text-gray-400">{label}</p>
+      <p className="text-sm font-semibold text-blue-400">
+        {payload[0].value.toLocaleString()} requests
+      </p>
+    </div>
+  );
+}
+
 export default function DashboardPage() {
-  const router = useRouter();
-  const [customer, setCustomer] = useState<CustomerData | null>(null);
+  const customer = useCustomer();
+  const [billing, setBilling] = useState<BillingSummary | null>(null);
+  const [chartData, setChartData] = useState<DailyPoint[]>([]);
+  const [recentCalls, setRecentCalls] = useState<UsageRecord[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showKey, setShowKey] = useState(false);
-  const [copied, setCopied] = useState(false);
+
+  const fetchData = useCallback(async () => {
+    if (!customer) return;
+    setLoading(true);
+
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
+
+    // Last 7 days range
+    const endDate = now.toISOString().split("T")[0];
+    const startDate = new Date(Date.now() - 6 * 86400000)
+      .toISOString()
+      .split("T")[0];
+
+    const [billingRes, usageRes, recentRes] = await Promise.allSettled([
+      fetch(
+        `/api/customer/billing-summary?year=${year}&month=${month}&tenantId=${customer.tenantId}`
+      ),
+      fetch(
+        `/api/customer/usage?tenantId=${customer.tenantId}&startDate=${startDate}&endDate=${endDate}`
+      ),
+      fetch(
+        `/api/customer/usage?tenantId=${customer.tenantId}&limit=10`
+      ),
+    ]);
+
+    // Billing
+    if (billingRes.status === "fulfilled" && billingRes.value.ok) {
+      const data = await billingRes.value.json();
+      setBilling(data.summary || data);
+    }
+
+    // Chart - group by day
+    if (usageRes.status === "fulfilled" && usageRes.value.ok) {
+      const data = await usageRes.value.json();
+      const records: UsageRecord[] = data.records || data.usage || [];
+      const dayMap: Record<string, number> = {};
+
+      // Initialize all 7 days to 0
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(Date.now() - i * 86400000);
+        const key = d.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        });
+        dayMap[key] = 0;
+      }
+
+      records.forEach((r) => {
+        const d = new Date(r.timestamp);
+        const key = d.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        });
+        if (key in dayMap) {
+          dayMap[key]++;
+        }
+      });
+
+      setChartData(
+        Object.entries(dayMap).map(([date, requests]) => ({
+          date,
+          requests,
+        }))
+      );
+    } else {
+      // Fallback empty chart
+      const empty: DailyPoint[] = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(Date.now() - i * 86400000);
+        empty.push({
+          date: d.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+          }),
+          requests: 0,
+        });
+      }
+      setChartData(empty);
+    }
+
+    // Recent calls
+    if (recentRes.status === "fulfilled" && recentRes.value.ok) {
+      const data = await recentRes.value.json();
+      setRecentCalls(data.records || data.usage || []);
+    }
+
+    setLoading(false);
+  }, [customer]);
 
   useEffect(() => {
-    // Try our customer API first, then fall back to next-auth session
-    fetch("/api/customer/me")
-      .then((res) => {
-        if (!res.ok) throw new Error("未登入");
-        return res.json();
-      })
-      .then((data) => setCustomer(data.customer))
-      .catch(async () => {
-        // Check next-auth session
-        try {
-          const sessionRes = await fetch("/api/auth/session");
-          const session = await sessionRes.json();
-          if (session?.user?.email) {
-            // Show Google session data as customer
-            setCustomer({
-              id: "google-user",
-              email: session.user.email,
-              companyName: session.user.name || "Google 用戶",
-              contactName: session.user.name || "用戶",
-              plan: "free",
-              apiKey: "nplus_sk_google_login_pending_setup",
-              status: "trial",
-              tokenQuota: 100000,
-              tokensUsed: 0,
-              createdAt: new Date().toISOString(),
-              trialEndsAt: new Date(Date.now() + 14 * 86400000).toISOString(),
-              planPrice: 0,
-            });
-            return;
-          }
-        } catch {}
-        router.push("/login");
-      })
-      .finally(() => setLoading(false));
-  }, [router]);
-
-  const copyKey = () => {
-    if (customer) {
-      navigator.clipboard.writeText(customer.apiKey);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
-
-  const logout = async () => {
-    document.cookie = "nclaw_token=; path=/; max-age=0";
-    // Sign out from next-auth with CSRF token
-    try {
-      const csrfRes = await fetch("/api/auth/csrf");
-      const { csrfToken } = await csrfRes.json();
-      await fetch("/api/auth/signout", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `csrfToken=${csrfToken}`,
-      });
-    } catch {}
-    // Clear all auth cookies manually
-    document.cookie.split(";").forEach((c) => {
-      const name = c.trim().split("=")[0];
-      if (name.includes("authjs") || name.includes("next-auth")) {
-        document.cookie = `${name}=; path=/; max-age=0; secure`;
-      }
-    });
-    window.location.href = "/login";
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-950 text-white flex items-center justify-center">
-        <div className="text-gray-400">載入中...</div>
-      </div>
-    );
-  }
+    fetchData();
+  }, [fetchData]);
 
   if (!customer) return null;
 
-  const usagePercent = customer.tokenQuota > 0 ? (customer.tokensUsed / customer.tokenQuota) * 100 : 0;
+  const statusColor =
+    customer.status === "active"
+      ? "green"
+      : customer.status === "trial"
+        ? "yellow"
+        : "red";
+  const statusLabel =
+    customer.status === "active"
+      ? "使用中"
+      : customer.status === "trial"
+        ? "試用中"
+        : "已暫停";
+
+  const usagePercent =
+    customer.tokenQuota > 0
+      ? (customer.tokensUsed / customer.tokenQuota) * 100
+      : 0;
+
+  const quickActions = [
+    {
+      href: "/chat",
+      title: "AI 聊天室",
+      desc: "直接與 AI 模型對話",
+      icon: "M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z",
+    },
+    {
+      href: "/dashboard/keys",
+      title: "API Keys",
+      desc: "管理 API 金鑰與權限",
+      icon: "M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z",
+    },
+    {
+      href: "/dashboard/usage",
+      title: "用量分析",
+      desc: "詳細用量數據與圖表",
+      icon: "M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z",
+    },
+    {
+      href: "/plans",
+      title: "升級方案",
+      desc: "解鎖更多額度與模型",
+      icon: "M13 10V3L4 14h7v7l9-11h-7z",
+    },
+  ];
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
-      {/* Header */}
-      <header className="border-b border-gray-800">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <a href="/">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-sm">N+</div>
-            </a>
-            <span className="font-semibold">客戶後台</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-400">{customer.companyName}</span>
-            <button onClick={logout} className="text-sm text-gray-500 hover:text-white transition-colors">登出</button>
-          </div>
-        </div>
-      </header>
+    <div>
+      {/* Welcome */}
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-white">
+          歡迎，{customer.contactName || customer.companyName}
+        </h1>
+        <p className="text-gray-400 mt-1">{customer.companyName}</p>
+      </div>
 
-      <main className="max-w-6xl mx-auto px-4 py-8">
-        {/* Welcome */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold">歡迎，{customer.contactName}</h1>
-          <p className="text-gray-400 mt-1">{customer.companyName}</p>
-        </div>
+      {/* Stat Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <StatCard
+          label="目前方案"
+          value={PLAN_LABELS[customer.plan] || customer.plan}
+          sub={`額度：${(customer.tokenQuota / 1_000_000).toFixed(1)}M tokens`}
+          color="blue"
+        />
+        <StatCard
+          label="帳號狀態"
+          value={statusLabel}
+          color={statusColor as "green" | "yellow" | "red"}
+        />
+        <StatCard
+          label="本月費用"
+          value={
+            billing
+              ? `NT$${Math.round(billing.totalBilledNtd).toLocaleString()}`
+              : loading
+                ? "..."
+                : "NT$0"
+          }
+          sub={
+            billing
+              ? `${billing.totalRequests} 次請求`
+              : undefined
+          }
+          color="purple"
+        />
+        <StatCard
+          label="使用率"
+          value={`${usagePercent.toFixed(1)}%`}
+          sub={`${(customer.tokensUsed / 1000).toFixed(0)}K / ${(customer.tokenQuota / 1_000_000).toFixed(0)}M`}
+          color={usagePercent > 80 ? "red" : usagePercent > 50 ? "yellow" : "green"}
+          progress={usagePercent}
+        />
+      </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-            <div className="text-sm text-gray-400 mb-1">目前方案</div>
-            <div className="text-xl font-bold">{PLAN_LABELS[customer.plan]}</div>
-            {customer.planPrice > 0 && (
-              <div className="text-sm text-gray-500 mt-1">NT${customer.planPrice.toLocaleString()}/月</div>
-            )}
-          </div>
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-            <div className="text-sm text-gray-400 mb-1">帳號狀態</div>
-            <div className={`text-xl font-bold ${customer.status === "active" ? "text-green-400" : customer.status === "trial" ? "text-yellow-400" : "text-red-400"}`}>
-              {customer.status === "active" ? "使用中" : customer.status === "trial" ? "試用中" : "已暫停"}
-            </div>
-            {customer.status === "trial" && (
-              <div className="text-sm text-gray-500 mt-1">到期：{new Date(customer.trialEndsAt).toLocaleDateString("zh-TW")}</div>
-            )}
-          </div>
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-            <div className="text-sm text-gray-400 mb-1">已用 Token</div>
-            <div className="text-xl font-bold">{(customer.tokensUsed / 1000).toFixed(0)}K</div>
-            <div className="text-sm text-gray-500 mt-1">/ {(customer.tokenQuota / 1_000_000).toFixed(0)}M 額度</div>
-          </div>
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-            <div className="text-sm text-gray-400 mb-1">使用率</div>
-            <div className="text-xl font-bold">{usagePercent.toFixed(1)}%</div>
-            <div className="w-full bg-gray-800 rounded-full h-2 mt-2">
-              <div className={`h-2 rounded-full ${usagePercent > 80 ? "bg-red-500" : usagePercent > 50 ? "bg-yellow-500" : "bg-blue-500"}`} style={{ width: `${Math.min(usagePercent, 100)}%` }} />
-            </div>
-          </div>
+      {/* Mini Usage Chart */}
+      <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-white">
+            近 7 天請求量
+          </h2>
+          <Link
+            href="/dashboard/usage"
+            className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+          >
+            查看詳情
+          </Link>
         </div>
+        {loading ? (
+          <div className="h-48 flex items-center justify-center text-gray-500">
+            載入圖表中...
+          </div>
+        ) : chartData.every((d) => d.requests === 0) ? (
+          <div className="h-48 flex items-center justify-center text-gray-500">
+            過去 7 天暫無用量資料
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height={200}>
+            <AreaChart data={chartData}>
+              <defs>
+                <linearGradient id="colorReq" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <XAxis
+                dataKey="date"
+                stroke="#6b7280"
+                tick={{ fill: "#9ca3af", fontSize: 12 }}
+                axisLine={{ stroke: "#374151" }}
+                tickLine={false}
+              />
+              <YAxis
+                stroke="#6b7280"
+                tick={{ fill: "#9ca3af", fontSize: 12 }}
+                axisLine={false}
+                tickLine={false}
+                allowDecimals={false}
+              />
+              <Tooltip content={<CustomTooltip />} />
+              <Area
+                type="monotone"
+                dataKey="requests"
+                stroke="#3b82f6"
+                strokeWidth={2}
+                fill="url(#colorReq)"
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        )}
+      </div>
 
-        {/* API Key */}
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-8">
-          <h2 className="text-lg font-semibold mb-4">API Key</h2>
-          <div className="flex items-center gap-3">
-            <code className="flex-1 bg-gray-950 rounded-lg px-4 py-3 text-sm text-gray-300 font-mono">
-              {showKey ? customer.apiKey : customer.apiKey.slice(0, 15) + "..." + customer.apiKey.slice(-4)}
-            </code>
-            <button onClick={() => setShowKey(!showKey)} className="px-4 py-3 border border-gray-700 rounded-lg text-sm hover:bg-gray-800 transition-colors">
-              {showKey ? "隱藏" : "顯示"}
-            </button>
-            <button onClick={copyKey} className="px-4 py-3 bg-blue-600 rounded-lg text-sm hover:bg-blue-500 transition-colors">
-              {copied ? "已複製" : "複製"}
-            </button>
+      {/* Recent API Calls */}
+      <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-white">
+            最近 API 呼叫
+          </h2>
+          <Link
+            href="/dashboard/usage"
+            className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+          >
+            查看全部
+          </Link>
+        </div>
+        {loading ? (
+          <div className="h-32 flex items-center justify-center text-gray-500">
+            載入中...
           </div>
-          <p className="text-xs text-gray-500 mt-3">
-            Base URL: https://api.nplusstar.ai/v1 | 使用方式與 OpenAI API 相同
-          </p>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-          <a href="/chat" className="bg-gray-900 border border-gray-800 rounded-xl p-5 hover:border-gray-600 transition-colors block">
-            <h3 className="font-semibold mb-1">AI 聊天室</h3>
-            <p className="text-sm text-gray-400">直接跟 AI 對話</p>
-          </a>
-          <a href="/plans" className="bg-gray-900 border border-gray-800 rounded-xl p-5 hover:border-gray-600 transition-colors block">
-            <h3 className="font-semibold mb-1">升級方案</h3>
-            <p className="text-sm text-gray-400">解鎖更多 Agent 和額度</p>
-          </a>
-          <a href="/billing" className="bg-gray-900 border border-gray-800 rounded-xl p-5 hover:border-gray-600 transition-colors block">
-            <h3 className="font-semibold mb-1">帳單記錄</h3>
-            <p className="text-sm text-gray-400">查看用量和費用明細</p>
-          </a>
-        </div>
-
-        {/* Usage Guide */}
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-          <h2 className="text-lg font-semibold mb-4">快速開始</h2>
-          <div className="space-y-3 text-sm text-gray-300">
-            <div className="flex gap-3">
-              <span className="bg-blue-600 rounded-full w-6 h-6 flex items-center justify-center text-xs shrink-0">1</span>
-              <span>複製上方 API Key</span>
-            </div>
-            <div className="flex gap-3">
-              <span className="bg-blue-600 rounded-full w-6 h-6 flex items-center justify-center text-xs shrink-0">2</span>
-              <span>設定 base_url 為 https://api.nplusstar.ai/v1</span>
-            </div>
-            <div className="flex gap-3">
-              <span className="bg-blue-600 rounded-full w-6 h-6 flex items-center justify-center text-xs shrink-0">3</span>
-              <span>使用 OpenAI 格式呼叫 API，或直接使用上方 AI 聊天室</span>
-            </div>
+        ) : recentCalls.length === 0 ? (
+          <div className="h-32 flex items-center justify-center text-gray-500">
+            尚無 API 呼叫紀錄
           </div>
-        </div>
-      </main>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-gray-400 border-b border-gray-800">
+                  <th className="text-left pb-3 font-medium">時間</th>
+                  <th className="text-left pb-3 font-medium">模型</th>
+                  <th className="text-right pb-3 font-medium">Tokens</th>
+                  <th className="text-right pb-3 font-medium">費用</th>
+                  <th className="text-right pb-3 font-medium">狀態</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-800/50">
+                {recentCalls.map((call) => (
+                  <tr key={call.id} className="text-gray-300">
+                    <td className="py-3 text-gray-400">
+                      {new Date(call.timestamp).toLocaleString("zh-TW", {
+                        month: "2-digit",
+                        day: "2-digit",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </td>
+                    <td className="py-3">
+                      <span className="bg-gray-800 text-gray-300 text-xs px-2 py-0.5 rounded-md">
+                        {call.model}
+                      </span>
+                    </td>
+                    <td className="py-3 text-right tabular-nums">
+                      {call.totalTokens?.toLocaleString() ?? "---"}
+                    </td>
+                    <td className="py-3 text-right tabular-nums">
+                      NT${call.billedNtd?.toFixed(2) ?? "0.00"}
+                    </td>
+                    <td className="py-3 text-right">
+                      <span
+                        className={`text-xs px-2 py-0.5 rounded-full ${
+                          call.status === "success"
+                            ? "bg-green-500/10 text-green-400"
+                            : "bg-red-500/10 text-red-400"
+                        }`}
+                      >
+                        {call.status === "success" ? "OK" : "Error"}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {quickActions.map((action) => (
+          <Link
+            key={action.href}
+            href={action.href}
+            className="bg-gray-900 border border-gray-800 rounded-xl p-5 hover:border-gray-600 hover:bg-gray-900/80 transition-all group block"
+          >
+            <div className="flex items-center gap-3 mb-2">
+              <svg
+                className="w-5 h-5 text-gray-400 group-hover:text-blue-400 transition-colors shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d={action.icon}
+                />
+              </svg>
+              <h3 className="font-semibold text-white">{action.title}</h3>
+            </div>
+            <p className="text-sm text-gray-400">{action.desc}</p>
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }

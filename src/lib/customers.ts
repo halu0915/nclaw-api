@@ -1,4 +1,6 @@
 import crypto from "crypto";
+import { query } from "./db";
+import { DEMO_TENANT_ID, ensureDemoTenant } from "./tenant";
 
 export interface Customer {
   id: string;
@@ -7,17 +9,15 @@ export interface Customer {
   companyName: string;
   contactName: string;
   phone: string;
-  plan: "free" | "light" | "standard" | "pro" | "enterprise";
+  plan: "free" | "developer" | "light" | "standard" | "pro" | "enterprise";
   apiKey: string;
   status: "active" | "suspended" | "trial";
   tokenQuota: number;
   tokensUsed: number;
   createdAt: string;
   trialEndsAt: string;
+  tenantId: string | null;
 }
-
-// In-memory store (MVP — migrate to PostgreSQL in Phase 2)
-const customers = new Map<string, Customer>();
 
 function hashPassword(password: string): string {
   const salt = crypto.randomBytes(16).toString("hex");
@@ -58,7 +58,8 @@ function verifyToken(token: string): string | null {
 }
 
 const PLAN_QUOTAS: Record<string, number> = {
-  free: 100_000,
+  free: 1_000_000,
+  developer: 999_999_999,
   light: 1_000_000,
   standard: 5_000_000,
   pro: 20_000_000,
@@ -67,79 +68,144 @@ const PLAN_QUOTAS: Record<string, number> = {
 
 const PLAN_PRICES: Record<string, number> = {
   free: 0,
+  developer: 0,
   light: 2990,
   standard: 9900,
   pro: 29900,
   enterprise: 0,
 };
 
-export function registerCustomer(data: {
+function rowToCustomer(r: Record<string, unknown>): Customer {
+  return {
+    id: r.id as string,
+    email: r.email as string,
+    passwordHash: r.password_hash as string,
+    companyName: (r.company_name as string) || "",
+    contactName: (r.contact_name as string) || "",
+    phone: (r.phone as string) || "",
+    plan: (r.plan as Customer["plan"]) || "free",
+    apiKey: (r.api_key as string) || "",
+    status: (r.status as Customer["status"]) || "trial",
+    tokenQuota: Number(r.token_quota) || PLAN_QUOTAS.free,
+    tokensUsed: Number(r.tokens_used) || 0,
+    createdAt: r.created_at ? String(r.created_at) : new Date().toISOString(),
+    trialEndsAt: r.trial_ends_at ? String(r.trial_ends_at) : new Date().toISOString(),
+    tenantId: (r.tenant_id as string) || null,
+  };
+}
+
+const CUSTOMER_COLS = `id, tenant_id, email, password_hash, company_name, contact_name, phone, plan, api_key, status, token_quota, tokens_used, created_at, trial_ends_at`;
+
+export async function registerCustomer(data: {
   email: string;
   password: string;
   companyName: string;
   contactName: string;
   phone: string;
-}): { customer: Customer; token: string } | { error: string } {
-  // Check duplicate email
-  for (const c of customers.values()) {
-    if (c.email === data.email) {
+}): Promise<{ customer: Customer; token: string } | { error: string }> {
+  try {
+    const existing = await query(
+      `SELECT id FROM customers WHERE email = $1`,
+      [data.email]
+    );
+    if (existing.rows.length > 0) {
       return { error: "此 Email 已註冊" };
     }
+
+    await ensureDemoTenant();
+
+    const trialEnd = new Date();
+    trialEnd.setDate(trialEnd.getDate() + 14);
+
+    const result = await query(
+      `INSERT INTO customers (tenant_id, email, password_hash, company_name, contact_name, phone, plan, api_key, status, token_quota, tokens_used, trial_ends_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 0, $11)
+       RETURNING ${CUSTOMER_COLS}`,
+      [
+        DEMO_TENANT_ID,
+        data.email,
+        hashPassword(data.password),
+        data.companyName,
+        data.contactName,
+        data.phone,
+        "free",
+        generateApiKey(),
+        "trial",
+        PLAN_QUOTAS.free,
+        trialEnd.toISOString(),
+      ]
+    );
+
+    const customer = rowToCustomer(result.rows[0]);
+    const token = generateToken(customer.id);
+    return { customer, token };
+  } catch (err) {
+    console.error("[customers] registerCustomer error:", err);
+    return { error: "註冊失敗，請稍後再試" };
   }
-
-  const id = crypto.randomUUID();
-  const trialEnd = new Date();
-  trialEnd.setDate(trialEnd.getDate() + 14);
-
-  const customer: Customer = {
-    id,
-    email: data.email,
-    passwordHash: hashPassword(data.password),
-    companyName: data.companyName,
-    contactName: data.contactName,
-    phone: data.phone,
-    plan: "free",
-    apiKey: generateApiKey(),
-    status: "trial",
-    tokenQuota: PLAN_QUOTAS.free,
-    tokensUsed: 0,
-    createdAt: new Date().toISOString(),
-    trialEndsAt: trialEnd.toISOString(),
-  };
-
-  customers.set(id, customer);
-  const token = generateToken(id);
-  return { customer, token };
 }
 
-export function loginCustomer(email: string, password: string): { customer: Customer; token: string } | { error: string } {
-  for (const c of customers.values()) {
-    if (c.email === email) {
-      if (verifyPassword(password, c.passwordHash)) {
-        const token = generateToken(c.id);
-        return { customer: c, token };
-      }
+export async function loginCustomer(email: string, password: string): Promise<{ customer: Customer; token: string } | { error: string }> {
+  try {
+    const result = await query(
+      `SELECT ${CUSTOMER_COLS} FROM customers WHERE email = $1`,
+      [email]
+    );
+    if (result.rows.length === 0) {
+      return { error: "帳號不存在" };
+    }
+    const customer = rowToCustomer(result.rows[0]);
+    if (!verifyPassword(password, customer.passwordHash)) {
       return { error: "密碼錯誤" };
     }
+    const token = generateToken(customer.id);
+    return { customer, token };
+  } catch (err) {
+    console.error("[customers] loginCustomer error:", err);
+    return { error: "登入失敗，請稍後再試" };
   }
-  return { error: "帳號不存在" };
 }
 
-export function getCustomerByToken(token: string): Customer | null {
+export async function getCustomerByToken(token: string): Promise<Customer | null> {
   const id = verifyToken(token);
   if (!id) return null;
-  return customers.get(id) || null;
+  try {
+    const result = await query(
+      `SELECT ${CUSTOMER_COLS} FROM customers WHERE id = $1`,
+      [id]
+    );
+    if (result.rows.length === 0) return null;
+    return rowToCustomer(result.rows[0]);
+  } catch {
+    return null;
+  }
 }
 
-export function updatePlan(customerId: string, plan: Customer["plan"]): Customer | null {
-  const customer = customers.get(customerId);
-  if (!customer) return null;
+export async function getCustomerByEmail(email: string): Promise<Customer | null> {
+  try {
+    const result = await query(
+      `SELECT ${CUSTOMER_COLS} FROM customers WHERE email = $1`,
+      [email]
+    );
+    if (result.rows.length === 0) return null;
+    return rowToCustomer(result.rows[0]);
+  } catch {
+    return null;
+  }
+}
 
-  customer.plan = plan;
-  customer.tokenQuota = PLAN_QUOTAS[plan] || PLAN_QUOTAS.free;
-  customer.status = "active";
-  customers.set(customerId, customer);
-  return customer;
+export async function updatePlan(customerId: string, plan: Customer["plan"]): Promise<Customer | null> {
+  try {
+    const quota = PLAN_QUOTAS[plan] || PLAN_QUOTAS.free;
+    const result = await query(
+      `UPDATE customers SET plan = $1, token_quota = $2, status = 'active' WHERE id = $3 RETURNING ${CUSTOMER_COLS}`,
+      [plan, quota, customerId]
+    );
+    if (result.rows.length === 0) return null;
+    return rowToCustomer(result.rows[0]);
+  } catch {
+    return null;
+  }
 }
 
 export function getCustomerPublic(c: Customer) {

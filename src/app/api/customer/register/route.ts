@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "密碼至少 6 碼" }, { status: 400 });
   }
 
-  const result = registerCustomer({ email, password, companyName, contactName, phone: phone || "" });
+  const result = await registerCustomer({ email, password, companyName, contactName, phone: phone || "" });
 
   if ("error" in result) {
     return NextResponse.json({ error: result.error }, { status: 409 });

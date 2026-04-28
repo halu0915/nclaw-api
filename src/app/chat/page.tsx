@@ -10,7 +10,8 @@ interface Message {
 const MODELS = [
   { id: "google/gemini-2.5-flash", name: "Gemini Flash", desc: "快速回覆" },
   { id: "anthropic/claude-sonnet-4-6", name: "Claude Sonnet", desc: "精準分析" },
-  { id: "deepseek/deepseek-chat-v3", name: "DeepSeek V3", desc: "高效推理" },
+  { id: "deepseek/deepseek-v4", name: "DeepSeek V4", desc: "高效推理" },
+  { id: "qwen/qwen3.6-plus", name: "Qwen 3.6 Plus", desc: "千問最強" },
   { id: "qwen/qwen3.5-397b-a17b", name: "Qwen 397B", desc: "深度理解" },
   { id: "openai/gpt-4o", name: "GPT-4o", desc: "全能模型" },
 ];

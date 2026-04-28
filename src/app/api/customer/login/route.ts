@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "請輸入 Email 和密碼" }, { status: 400 });
   }
 
-  const result = loginCustomer(email, password);
+  const result = await loginCustomer(email, password);
 
   if ("error" in result) {
     return NextResponse.json({ error: result.error }, { status: 401 });

@@ -49,21 +49,11 @@ export default function PlansPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
-      <header className="border-b border-gray-800">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center gap-3">
-          <a href="/dashboard">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-sm">N+</div>
-          </a>
-          <span className="font-semibold">選擇方案</span>
-        </div>
-      </header>
-
-      <main className="max-w-6xl mx-auto px-4 py-12">
-        <div className="text-center mb-12">
-          <h1 className="text-3xl font-bold mb-3">選擇適合你的方案</h1>
-          <p className="text-gray-400">14 天免費試用，隨時可升級或降級</p>
-        </div>
+    <div>
+      <div className="text-center mb-12">
+        <h1 className="text-3xl font-bold mb-3">選擇適合你的方案</h1>
+        <p className="text-gray-400">14 天免費試用，隨時可升級或降級</p>
+      </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
           {plans.map((plan) => (
@@ -110,10 +100,9 @@ export default function PlansPage() {
           ))}
         </div>
 
-        <div className="text-center mt-8">
-          <a href="/dashboard" className="text-gray-500 hover:text-gray-300 text-sm">返回後台</a>
-        </div>
-      </main>
+      <div className="text-center mt-8">
+        <a href="/dashboard" className="text-gray-500 hover:text-gray-300 text-sm">返回後台</a>
+      </div>
     </div>
   );
 }

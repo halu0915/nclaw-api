@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUsageSummary, getUsage } from "@/lib/usage";
 
-const ADMIN_SECRET = process.env.ADMIN_SECRET || "nclaw-admin-2026";
-
 function checkAdmin(req: NextRequest): boolean {
+  const adminSecret = process.env.ADMIN_SECRET;
+  if (!adminSecret) {
+    console.error("[admin] ADMIN_SECRET env not set — admin endpoint disabled");
+    return false;
+  }
   const auth = req.headers.get("x-admin-secret");
-  return auth === ADMIN_SECRET;
+  return auth === adminSecret;
 }
 
 export async function GET(req: NextRequest) {
@@ -19,10 +22,10 @@ export async function GET(req: NextRequest) {
   const endDate = searchParams.get("end") || undefined;
   const detail = searchParams.get("detail") === "true";
 
-  const summary = getUsageSummary(tenantId);
+  const summary = await getUsageSummary(tenantId);
 
   if (detail) {
-    const records = getUsage({ tenantId, startDate, endDate });
+    const records = await getUsage({ tenantId, startDate, endDate });
     return NextResponse.json({ summary, records });
   }
 
