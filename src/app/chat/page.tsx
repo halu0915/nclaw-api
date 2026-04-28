@@ -50,7 +50,7 @@ export default function ChatPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.NEXT_PUBLIC_DEMO_KEY || "nplus_sk_demo_test_key_for_internal_use_2026_nplusstar"}`,
+          Authorization: `Bearer ${process.env.NEXT_PUBLIC_DEMO_KEY ?? ""}`,
         },
         body: JSON.stringify({
           model,
