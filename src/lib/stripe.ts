@@ -106,27 +106,75 @@ export async function getBalance(tenantId: string): Promise<number> {
   }
 }
 
-export async function addCredits(tenantId: string, amount: number, description: string, stripeSessionId?: string): Promise<number> {
+/**
+ * 加點數。給 webhook 用時務必傳 stripeSessionId，靠 UNIQUE INDEX
+ * (stripe_session_id) 做 atomic 防雙重發點。並發兩個同 sessionId 進來，
+ * 第二個會在 INSERT 時拿到 UNIQUE conflict，回傳 alreadyProcessed。
+ */
+export async function addCredits(
+  tenantId: string,
+  amount: number,
+  description: string,
+  stripeSessionId?: string
+): Promise<{ balance: number; alreadyProcessed: boolean }> {
   try {
-    const result = await query(
+    if (stripeSessionId) {
+      // Step 1: 先 atomic 「鎖定」此 session — INSERT credit_transactions 含 stripe_session_id
+      // 若已存在（UNIQUE 衝突）→ 表示前一個 webhook 已處理，直接回傳
+      const claim = await query<{ id: string }>(
+        `INSERT INTO credit_transactions
+           (tenant_id, type, amount, balance_after, description, stripe_session_id)
+         VALUES ($1, 'purchase', $2, 0, $3, $4)
+         ON CONFLICT (stripe_session_id) WHERE stripe_session_id IS NOT NULL DO NOTHING
+         RETURNING id`,
+        [tenantId, amount, description, stripeSessionId]
+      );
+      if (claim.rows.length === 0) {
+        const balance = await getBalance(tenantId);
+        return { balance, alreadyProcessed: true };
+      }
+      const txId = claim.rows[0].id;
+
+      // Step 2: balance += amount
+      const balResult = await query<{ balance: string }>(
+        `INSERT INTO credit_balances (tenant_id, balance, updated_at)
+         VALUES ($1, $2, NOW())
+         ON CONFLICT (tenant_id) DO UPDATE
+         SET balance = credit_balances.balance + $2, updated_at = NOW()
+         RETURNING balance`,
+        [tenantId, amount]
+      );
+      const newBalance = Number(balResult.rows[0].balance);
+
+      // Step 3: 補上正確的 balance_after
+      await query(
+        `UPDATE credit_transactions SET balance_after = $1 WHERE id = $2`,
+        [newBalance, txId]
+      );
+
+      return { balance: newBalance, alreadyProcessed: false };
+    }
+
+    // 非 webhook 路徑（手動加點 / bonus）：沒 sessionId 不走 idempotency
+    const balResult = await query<{ balance: string }>(
       `INSERT INTO credit_balances (tenant_id, balance, updated_at)
        VALUES ($1, $2, NOW())
        ON CONFLICT (tenant_id) DO UPDATE SET balance = credit_balances.balance + $2, updated_at = NOW()
        RETURNING balance`,
       [tenantId, amount]
     );
-    const newBalance = Number(result.rows[0].balance);
+    const newBalance = Number(balResult.rows[0].balance);
 
     await query(
       `INSERT INTO credit_transactions (tenant_id, type, amount, balance_after, description, stripe_session_id)
-       VALUES ($1, 'purchase', $2, $3, $4, $5)`,
-      [tenantId, amount, newBalance, description, stripeSessionId || null]
+       VALUES ($1, 'purchase', $2, $3, $4, NULL)`,
+      [tenantId, amount, newBalance, description]
     );
 
-    return newBalance;
+    return { balance: newBalance, alreadyProcessed: false };
   } catch (err) {
     console.error("[stripe] addCredits error:", err);
-    return 0;
+    return { balance: 0, alreadyProcessed: false };
   }
 }
 
@@ -184,6 +232,10 @@ export async function getCreditTransactions(tenantId: string): Promise<CreditTra
   }
 }
 
+/**
+ * 給 webhook 預檢用（避免「已處理」case 跑下游 metadata 解析）。
+ * 真正的 atomic 防雙重發點在 addCredits 裡（UNIQUE INDEX + ON CONFLICT）。
+ */
 export async function isSessionProcessed(sessionId: string): Promise<boolean> {
   try {
     const result = await query(
@@ -194,8 +246,4 @@ export async function isSessionProcessed(sessionId: string): Promise<boolean> {
   } catch {
     return false;
   }
-}
-
-export function markSessionProcessed(_sessionId: string): void {
-  // No-op: session is tracked via stripe_session_id in credit_transactions
 }

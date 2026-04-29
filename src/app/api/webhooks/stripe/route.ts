@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyWebhookSignature, addCredits, isSessionProcessed, markSessionProcessed } from "@/lib/stripe";
+import { verifyWebhookSignature, addCredits } from "@/lib/stripe";
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
@@ -26,10 +26,6 @@ export async function POST(req: NextRequest) {
     const obj = session.object as Record<string, unknown>;
     const sessionId = obj.id as string;
 
-    if (await isSessionProcessed(sessionId)) {
-      return NextResponse.json({ received: true, status: "already_processed" });
-    }
-
     const metadata = obj.metadata as Record<string, string> | undefined;
     const tenantId = metadata?.tenantId;
     const creditAmount = parseInt(metadata?.creditAmount || "0", 10);
@@ -40,15 +36,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid session metadata" }, { status: 400 });
     }
 
-    const newBalance = await addCredits(
+    // addCredits 內部用 UNIQUE INDEX 做 atomic 防雙重發點：
+    // Stripe webhook retry 時，第二個進來的會拿到 alreadyProcessed=true
+    const result = await addCredits(
       tenantId,
       creditAmount,
       `Purchased ${packageId}: +${creditAmount} credits`,
       sessionId
     );
 
-    markSessionProcessed(sessionId);
-    console.log(`Credits added: tenant=${tenantId}, credits=${creditAmount}, balance=${newBalance}`);
+    if (result.alreadyProcessed) {
+      console.log(`Webhook retry detected: session=${sessionId}, returning already_processed`);
+      return NextResponse.json({ received: true, status: "already_processed" });
+    }
+    console.log(`Credits added: tenant=${tenantId}, credits=${creditAmount}, balance=${result.balance}`);
   }
 
   return NextResponse.json({ received: true });

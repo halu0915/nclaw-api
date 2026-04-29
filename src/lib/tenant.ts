@@ -81,6 +81,12 @@ export async function ensureDemoTenant(): Promise<void> {
         created_at        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
       )
     `);
+    // 防 Stripe webhook retry 雙重發點：同一 stripe_session_id 只能落一筆 purchase
+    await query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS credit_transactions_stripe_session_id_unique
+        ON credit_transactions (stripe_session_id)
+        WHERE stripe_session_id IS NOT NULL
+    `);
 
     for (const seed of SEED_KEYS) {
       const hash = hashKey(seed.raw);

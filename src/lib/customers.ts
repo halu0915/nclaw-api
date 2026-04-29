@@ -40,18 +40,56 @@ function generateApiKey(): string {
   return result;
 }
 
+// Customer session token：HMAC-SHA256 簽名防偽造。
+// 格式：base64url(payload).base64url(sig) — 兩段以 "." 分隔
+const TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 天
+
+function getTokenSecret(): string {
+  const secret = process.env.AUTH_SECRET;
+  if (!secret || secret.length < 16) {
+    throw new Error("AUTH_SECRET env missing or too short (min 16 chars)");
+  }
+  return secret;
+}
+
+function sign(data: string, secret: string): string {
+  return crypto.createHmac("sha256", secret).update(data).digest("base64url");
+}
+
+// timing-safe 比對，避免 timing attack
+function timingSafeEqual(a: string, b: string): boolean {
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  if (bufA.length !== bufB.length) return false;
+  return crypto.timingSafeEqual(bufA, bufB);
+}
+
 function generateToken(customerId: string): string {
-  const payload = { id: customerId, ts: Date.now() };
-  return Buffer.from(JSON.stringify(payload)).toString("base64url");
+  const secret = getTokenSecret();
+  const payload = Buffer.from(
+    JSON.stringify({ id: customerId, ts: Date.now() })
+  ).toString("base64url");
+  const sig = sign(payload, secret);
+  return `${payload}.${sig}`;
 }
 
 function verifyToken(token: string): string | null {
   try {
-    const payload = JSON.parse(Buffer.from(token, "base64url").toString());
-    if (payload.id && Date.now() - payload.ts < 7 * 24 * 60 * 60 * 1000) {
-      return payload.id;
-    }
-    return null;
+    const secret = getTokenSecret();
+    const dotIndex = token.indexOf(".");
+    if (dotIndex < 0) return null;
+    const payload = token.slice(0, dotIndex);
+    const sig = token.slice(dotIndex + 1);
+    if (!payload || !sig) return null;
+
+    const expected = sign(payload, secret);
+    if (!timingSafeEqual(sig, expected)) return null;
+
+    const parsed = JSON.parse(Buffer.from(payload, "base64url").toString());
+    if (!parsed.id || typeof parsed.ts !== "number") return null;
+    if (Date.now() - parsed.ts >= TOKEN_TTL_MS) return null;
+
+    return parsed.id;
   } catch {
     return null;
   }
