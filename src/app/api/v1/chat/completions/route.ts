@@ -154,6 +154,7 @@ export async function POST(req: NextRequest) {
         upstream_status: providerRes.status,
         latency_ms: Date.now() - startTime,
       });
+      await log.flush(); // P1 #6: 確保 Sentry event 在 serverless freeze 前送出
       return NextResponse.json(
         {
           error: {
@@ -336,6 +337,7 @@ export async function POST(req: NextRequest) {
       errorMessage: error instanceof Error ? error.message : "Internal error",
     }).catch(() => {});
 
+    await log.flush(); // P1 #6: 確保 Sentry event 在 serverless freeze 前送出
     return NextResponse.json(
       {
         error: {

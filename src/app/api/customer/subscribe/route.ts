@@ -40,13 +40,26 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "無效的方案" }, { status: 400 });
   }
 
-  const updated = await updatePlan(customerId, plan);
+  // P1 #4: 客戶只能 downgrade 到 free。付費方案必須走 Stripe Checkout（webhook 觸發 updatePlan）。
+  // 原本任何客戶都能直接 POST {plan: "enterprise"} → updatePlan，等於免費升級到 enterprise。
+  if (plan !== "free") {
+    return NextResponse.json(
+      {
+        error: "付費方案必須透過結帳完成。請從方案頁建立 Stripe Checkout Session。",
+        code: "payment_required",
+        suggested_endpoint: "/api/v1/credits/purchase 或方案結帳頁",
+      },
+      { status: 402 }
+    );
+  }
+
+  const updated = await updatePlan(customerId, "free");
   if (!updated) {
     return NextResponse.json({ error: "更新失敗" }, { status: 500 });
   }
 
   return NextResponse.json({
-    message: `已升級為${plan}方案`,
+    message: "已切回免費方案",
     customer: getCustomerPublic(updated),
   });
 }

@@ -181,6 +181,7 @@ export async function POST(req: NextRequest) {
         upstream_status: response.status,
         latency_ms: Date.now() - startTime,
       });
+      await log.flush(); // P1 #6: 確保 Sentry event 在 serverless freeze 前送出
       return NextResponse.json(
         { error: { message: `Video generation error: ${response.status}`, type: "upstream_error", details: errText } },
         { status: response.status, headers: { "X-Request-Id": requestId } }
@@ -266,6 +267,7 @@ export async function POST(req: NextRequest) {
       status: "error",
     });
 
+    await log.flush(); // P1 #6: 確保 Sentry event 在 serverless freeze 前送出
     return NextResponse.json(
       { error: { message: error instanceof Error ? error.message : "Internal error", type: "internal_error" } },
       { status: 500 }
