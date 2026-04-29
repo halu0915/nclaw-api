@@ -1,6 +1,6 @@
 import crypto from "crypto";
 import { query } from "./db";
-import { DEMO_TENANT_ID, ensureDemoTenant } from "./tenant";
+import { ensureDemoTenant } from "./tenant";
 
 export interface Customer {
   id: string;
@@ -150,7 +150,14 @@ export async function registerCustomer(data: {
       return { error: "此 Email 已註冊" };
     }
 
-    await ensureDemoTenant();
+    // P1 #5: 跨 tenant 隔離 — 每個新註冊的 customer 都有自己獨立的 tenant，
+    // 不再共用 DEMO_TENANT_ID（避免 A 客戶看到 B 客戶的 usage / keys / employees）。
+    await ensureDemoTenant(); // 確保 schema 與 DEMO tenant 存在
+    const tenantInsert = await query<{ id: string }>(
+      `INSERT INTO tenants (name, plan, status) VALUES ($1, 'free', 'active') RETURNING id`,
+      [data.companyName || data.email]
+    );
+    const newTenantId = tenantInsert.rows[0].id;
 
     const trialEnd = new Date();
     trialEnd.setDate(trialEnd.getDate() + 14);
@@ -160,7 +167,7 @@ export async function registerCustomer(data: {
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 0, $11)
        RETURNING ${CUSTOMER_COLS}`,
       [
-        DEMO_TENANT_ID,
+        newTenantId,
         data.email,
         hashPassword(data.password),
         data.companyName,

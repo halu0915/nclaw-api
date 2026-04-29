@@ -22,7 +22,10 @@ export interface CustomerAuth {
   tenantId: string;
 }
 
-function resolveTenantId(_customer: Customer): string {
+// P1 #5: 用 customer.tenantId 解出該客戶自己的 tenant；未設過的舊客戶 fallback DEMO（但記錄警告）。
+function resolveTenantId(customer: Customer): string {
+  if (customer.tenantId) return customer.tenantId;
+  console.warn(`[customer-auth] customer ${customer.id} has no tenantId, falling back to DEMO. Run migration to assign a dedicated tenant.`);
   return DEMO_TENANT_ID;
 }
 
