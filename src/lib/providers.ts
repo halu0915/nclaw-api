@@ -217,7 +217,9 @@ export async function callProvider(
   if (provider === "google") {
     const googleModel = (transformedBody as Record<string, unknown>)._googleModel;
     delete (transformedBody as Record<string, unknown>)._googleModel;
-    url = `${config.baseUrl}/${googleModel}:${body.stream ? "streamGenerateContent" : "generateContent"}?key=${apiKey}`;
+    const action = body.stream ? "streamGenerateContent" : "generateContent";
+    const altParam = body.stream ? "&alt=sse" : "";
+    url = `${config.baseUrl}/${googleModel}:${action}?key=${apiKey}${altParam}`;
     delete headers["Content-Type"];
     headers["Content-Type"] = "application/json";
   }
@@ -305,6 +307,95 @@ export function normalizeToOpenAI(
 
   // OpenAI-compatible providers — return as-is
   return data;
+}
+
+/**
+ * Normalize a streaming chunk (raw provider data) into OpenAI SSE format.
+ *
+ * Returns:
+ * - For Google/Anthropic: an OpenAI-shaped chunk JSON
+ * - For OpenAI-compatible providers: the raw chunk JSON (already correct shape)
+ *
+ * Returns null if chunk should be skipped (e.g. heartbeat, parse failure).
+ */
+export function normalizeStreamChunk(
+  provider: Provider,
+  rawChunk: Record<string, unknown>,
+  model: string,
+  chunkId: string,
+  isFinal = false,
+): Record<string, unknown> | null {
+  if (provider === "google") {
+    const candidates = (rawChunk.candidates as Array<Record<string, unknown>>) || [];
+    if (candidates.length === 0) return null;
+    const choices = candidates.map((c, idx) => {
+      const content = c.content as Record<string, unknown> | undefined;
+      const parts = (content?.parts as Array<Record<string, unknown>>) || [];
+      const text = parts.map((p) => String(p.text ?? "")).join("");
+      const finishReason = c.finishReason ? String(c.finishReason).toLowerCase() : null;
+      return {
+        index: idx,
+        delta: text ? { role: "assistant", content: text } : {},
+        finish_reason: finishReason === "stop" || isFinal ? "stop" : null,
+      };
+    });
+    return {
+      id: chunkId,
+      object: "chat.completion.chunk",
+      created: Math.floor(Date.now() / 1000),
+      model: String(rawChunk.modelVersion ?? model),
+      choices,
+    };
+  }
+
+  if (provider === "anthropic") {
+    // Anthropic SSE has multiple event types: message_start, content_block_delta, message_delta, message_stop
+    const eventType = rawChunk.type as string | undefined;
+    if (eventType === "content_block_delta") {
+      const delta = rawChunk.delta as Record<string, unknown> | undefined;
+      const text = delta?.type === "text_delta" ? String(delta.text ?? "") : "";
+      if (!text) return null;
+      return {
+        id: chunkId,
+        object: "chat.completion.chunk",
+        created: Math.floor(Date.now() / 1000),
+        model,
+        choices: [
+          { index: 0, delta: { content: text }, finish_reason: null },
+        ],
+      };
+    }
+    if (eventType === "message_delta") {
+      const delta = rawChunk.delta as Record<string, unknown> | undefined;
+      const stopReason = delta?.stop_reason as string | undefined;
+      if (stopReason) {
+        return {
+          id: chunkId,
+          object: "chat.completion.chunk",
+          created: Math.floor(Date.now() / 1000),
+          model,
+          choices: [
+            { index: 0, delta: {}, finish_reason: stopReason === "end_turn" ? "stop" : stopReason },
+          ],
+        };
+      }
+    }
+    if (eventType === "message_start") {
+      return {
+        id: chunkId,
+        object: "chat.completion.chunk",
+        created: Math.floor(Date.now() / 1000),
+        model,
+        choices: [
+          { index: 0, delta: { role: "assistant", content: "" }, finish_reason: null },
+        ],
+      };
+    }
+    return null;
+  }
+
+  // OpenAI-compatible providers — pass through
+  return rawChunk;
 }
 
 // ---------------------------------------------------------------------------

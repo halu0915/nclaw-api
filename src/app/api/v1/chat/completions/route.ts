@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { validateApiKeyOrSameOriginDemo, checkModelPermission } from "@/lib/auth";
 import { recordUsage } from "@/lib/usage";
 import { calculateCost } from "@/lib/pricing";
-import { callProviderWithRetry, extractUsage, normalizeToOpenAI } from "@/lib/providers";
+import { callProviderWithRetry, extractUsage, normalizeToOpenAI, normalizeStreamChunk } from "@/lib/providers";
 import { checkRateLimit } from "@/lib/rate-limiter";
 import { checkDepartmentQuota, incrementDepartmentUsage } from "@/lib/departments";
 import { ensureDemoTenant } from "@/lib/tenant";
@@ -172,15 +172,23 @@ export async function POST(req: NextRequest) {
       const reader = providerRes.body.getReader();
       const encoder = new TextEncoder();
       const decoder = new TextDecoder();
+      const chunkId = `chatcmpl-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
       let inputTokens = 0;
       let outputTokens = 0;
       let cachedTokens = 0;
+      let buffer = "";
 
       const readable = new ReadableStream({
         async pull(controller) {
           const { done, value } = await reader.read();
           if (done) {
+            // Flush any remaining buffered content + send terminator
+            if (buffer.trim()) {
+              processSseLine(buffer);
+            }
+            controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+
             const latencyMs = Date.now() - startTime;
             const { costUsd, billedNtd } = calculateCost(
               model, inputTokens, outputTokens, apiKey.plan, cachedTokens
@@ -208,25 +216,45 @@ export async function POST(req: NextRequest) {
             return;
           }
 
-          const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split("\n");
-          for (const line of lines) {
-            if (line.startsWith("data: ") && line !== "data: [DONE]") {
-              try {
-                const data = JSON.parse(line.slice(6));
-                if (data.usage) {
-                  const usage = extractUsage(provider, data);
-                  inputTokens = usage.inputTokens || inputTokens;
-                  outputTokens = usage.outputTokens || outputTokens;
-                  cachedTokens = usage.cachedTokens || cachedTokens;
-                }
-              } catch {
-                // Skip unparseable chunks
-              }
-            }
+          buffer += decoder.decode(value, { stream: true });
+
+          // Process complete SSE events (separated by blank line)
+          const events = buffer.split(/\n\n/);
+          buffer = events.pop() || ""; // Keep partial event for next pull
+
+          for (const event of events) {
+            processSseLine(event);
           }
 
-          controller.enqueue(encoder.encode(chunk));
+          function processSseLine(eventText: string) {
+            const trimmed = eventText.trim();
+            if (!trimmed) return;
+            // Extract data: line content (may span multiple data: lines per SSE spec)
+            const dataLines = trimmed.split("\n").filter((l) => l.startsWith("data: "));
+            if (dataLines.length === 0) return;
+            const payload = dataLines.map((l) => l.slice(6)).join("\n");
+            if (payload === "[DONE]") {
+              // Don't forward upstream [DONE]; we emit our own at end
+              return;
+            }
+            try {
+              const rawChunk = JSON.parse(payload);
+
+              // Update token counts from any usage info in chunk
+              const usage = extractUsage(provider, rawChunk);
+              if (usage.inputTokens) inputTokens = usage.inputTokens;
+              if (usage.outputTokens) outputTokens = usage.outputTokens;
+              if (usage.cachedTokens) cachedTokens = usage.cachedTokens;
+
+              // Normalize chunk to OpenAI shape
+              const normalized = normalizeStreamChunk(provider, rawChunk, model, chunkId);
+              if (normalized) {
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify(normalized)}\n\n`));
+              }
+            } catch {
+              // Skip unparseable chunks
+            }
+          }
         },
       });
 
