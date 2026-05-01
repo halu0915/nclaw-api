@@ -65,17 +65,41 @@ const PROVIDER_CONFIGS: Record<Provider, ProviderConfig> = {
     authHeader: () => ({}),
     transformRequest: (body, providerModel) => {
       const messages = (body.messages as Array<Record<string, unknown>>) || [];
+
+      // OpenAI spec: message.content can be string OR array of {type,text|image_url} objects.
+      // Convert both shapes to a single string for Gemini.
+      const extractText = (content: unknown): string => {
+        if (typeof content === "string") return content;
+        if (Array.isArray(content)) {
+          return content
+            .map((part) => {
+              if (typeof part === "string") return part;
+              if (part && typeof part === "object") {
+                const p = part as Record<string, unknown>;
+                if (typeof p.text === "string") return p.text;
+                // Skip image_url and other non-text parts (TODO: handle multimodal)
+                return "";
+              }
+              return "";
+            })
+            .filter(Boolean)
+            .join("\n");
+        }
+        if (content == null) return "";
+        return String(content);
+      };
+
       return {
         _googleModel: providerModel,
         contents: messages
           .filter((m) => m.role !== "system")
           .map((m) => ({
             role: m.role === "assistant" ? "model" : "user",
-            parts: [{ text: String(m.content) }],
+            parts: [{ text: extractText(m.content) }],
           })),
         systemInstruction: (() => {
           const sys = messages.find((m) => m.role === "system");
-          return sys ? { parts: [{ text: String(sys.content) }] } : undefined;
+          return sys ? { parts: [{ text: extractText(sys.content) }] } : undefined;
         })(),
         generationConfig: {
           maxOutputTokens: (body.max_tokens as number) || 4096,
