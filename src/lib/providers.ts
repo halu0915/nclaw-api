@@ -235,6 +235,78 @@ export function extractUsage(provider: Provider, data: Record<string, unknown>) 
   return PROVIDER_CONFIGS[provider].extractUsage(data);
 }
 
+/**
+ * Normalize provider response to OpenAI chat.completion shape so that
+ * callers (web chat UI, OpenAI-SDK clients) can read `choices[0].message.content`
+ * uniformly regardless of upstream provider.
+ *
+ * OpenAI / DeepSeek / DashScope / Volcengine / OpenRouter already use this shape.
+ * Google Gemini and Anthropic return their native shapes and need translation.
+ */
+export function normalizeToOpenAI(
+  provider: Provider,
+  data: Record<string, unknown>,
+  model: string
+): Record<string, unknown> {
+  if (provider === "google") {
+    const candidates = (data.candidates as Array<Record<string, unknown>>) || [];
+    const choices = candidates.map((c, idx) => {
+      const content = c.content as Record<string, unknown> | undefined;
+      const parts = (content?.parts as Array<Record<string, unknown>>) || [];
+      const text = parts.map((p) => String(p.text ?? "")).join("");
+      const finishReason = String(c.finishReason ?? "stop").toLowerCase();
+      return {
+        index: idx,
+        message: { role: "assistant", content: text },
+        finish_reason: finishReason === "stop" ? "stop" : finishReason,
+      };
+    });
+    const meta = data.usageMetadata as Record<string, number> | undefined;
+    return {
+      id: String(data.responseId ?? `chatcmpl-${Date.now()}`),
+      object: "chat.completion",
+      created: Math.floor(Date.now() / 1000),
+      model: String(data.modelVersion ?? model),
+      choices,
+      usage: {
+        prompt_tokens: meta?.promptTokenCount ?? 0,
+        completion_tokens: meta?.candidatesTokenCount ?? 0,
+        total_tokens: meta?.totalTokenCount ?? 0,
+      },
+    };
+  }
+
+  if (provider === "anthropic") {
+    const contentBlocks = (data.content as Array<Record<string, unknown>>) || [];
+    const text = contentBlocks
+      .filter((b) => b.type === "text")
+      .map((b) => String(b.text ?? ""))
+      .join("");
+    const usage = data.usage as Record<string, number> | undefined;
+    return {
+      id: String(data.id ?? `chatcmpl-${Date.now()}`),
+      object: "chat.completion",
+      created: Math.floor(Date.now() / 1000),
+      model: String(data.model ?? model),
+      choices: [
+        {
+          index: 0,
+          message: { role: "assistant", content: text },
+          finish_reason: String(data.stop_reason ?? "stop") === "end_turn" ? "stop" : String(data.stop_reason ?? "stop"),
+        },
+      ],
+      usage: {
+        prompt_tokens: usage?.input_tokens ?? 0,
+        completion_tokens: usage?.output_tokens ?? 0,
+        total_tokens: (usage?.input_tokens ?? 0) + (usage?.output_tokens ?? 0),
+      },
+    };
+  }
+
+  // OpenAI-compatible providers — return as-is
+  return data;
+}
+
 // ---------------------------------------------------------------------------
 // Retry + fallback wrapper
 // ---------------------------------------------------------------------------

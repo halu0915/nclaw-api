@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { validateApiKeyOrSameOriginDemo, checkModelPermission } from "@/lib/auth";
 import { recordUsage } from "@/lib/usage";
 import { calculateCost } from "@/lib/pricing";
-import { callProviderWithRetry, extractUsage } from "@/lib/providers";
+import { callProviderWithRetry, extractUsage, normalizeToOpenAI } from "@/lib/providers";
 import { checkRateLimit } from "@/lib/rate-limiter";
 import { checkDepartmentQuota, incrementDepartmentUsage } from "@/lib/departments";
 import { ensureDemoTenant } from "@/lib/tenant";
@@ -242,9 +242,10 @@ export async function POST(req: NextRequest) {
     }
 
     // Non-streaming
-    const data = await providerRes.json();
+    const rawData = await providerRes.json();
+    const data = normalizeToOpenAI(provider, rawData, model);
     const latencyMs = Date.now() - startTime;
-    const usage = extractUsage(provider, data);
+    const usage = extractUsage(provider, rawData);
 
     const { costUsd, billedNtd } = calculateCost(
       model, usage.inputTokens, usage.outputTokens, apiKey.plan, usage.cachedTokens
