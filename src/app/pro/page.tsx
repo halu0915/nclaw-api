@@ -88,7 +88,7 @@ export default function ProPage() {
               { n: 1, title: "下載 DMG", desc: "點上方按鈕下載 NClawPro-PoC-v0.dmg" },
               { n: 2, title: "雙擊掛載", desc: "雙擊 dmg 檔開啟，看到 N+Claw Pro 圖示" },
               { n: 3, title: "拖到 Applications", desc: "把 N+Claw Pro 拖到右邊的 Applications 資料夾" },
-              { n: 4, title: "繞過 Gatekeeper", desc: "雙擊 N+Claw Pro 看到「無法打開」→ 進「設定 → 隱私與安全性」最下方點「仍要打開」（macOS 15+ 已拿掉右鍵繞過）" },
+              { n: 4, title: "繞過 Gatekeeper（首次）", desc: "雙擊 N+Claw Pro → 第一次會看到「無法打開」對話框。請進「系統設定 → 隱私與安全性」拉到最下方，點「仍要打開」並輸入密碼。再雙擊就能開了。如還不行，開啟 Terminal 貼：xattr -cr \"/Applications/N+Claw Pro.app\"" },
               { n: 5, title: "首次啟動", desc: "自動安裝 OpenClaw 與配置（需要 Node.js，沒裝會引導你下載）" },
               { n: 6, title: "開始用", desc: "瀏覽器自動開啟 N+Claw Pro Control UI，可以開始 chat" },
             ].map((step) => (
