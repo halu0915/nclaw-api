@@ -10,6 +10,21 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      // /pro moved to brand main site
+      {
+        source: "/pro",
+        destination: "https://nplusstar.ai/pro",
+        permanent: true,
+      },
+      {
+        source: "/download/:path*",
+        destination: "https://nplusstar.ai/download/:path*",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default withSentryConfig(nextConfig, {
