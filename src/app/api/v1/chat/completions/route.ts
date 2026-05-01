@@ -16,6 +16,9 @@ import { log, newRequestId } from "@/lib/log";
 
 const MAX_BODY_BYTES = 1_000_000; // 1 MB; OpenAI 單請求上限約 200K tokens 也夠
 
+// Allow long streaming responses (Gemini Flash with large system context can take 30-60s)
+export const maxDuration = 300;
+
 export async function POST(req: NextRequest) {
   const requestId = newRequestId();
   const auth = await validateApiKeyOrSameOriginDemo(req);
