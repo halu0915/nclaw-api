@@ -67,7 +67,18 @@ export async function POST(req: NextRequest) {
     }
 
     const model = (body.model as string) || "qwen/qwen3.6-plus";
-    const stream = (body.stream as boolean) || false;
+    const clientWantsStream = (body.stream as boolean) || false;
+
+    // Workaround: Gemini/Anthropic streaming has reliability issues for large
+    // responses through our normalize layer. Force non-streaming upstream then
+    // re-emit as a single SSE chunk if client wanted stream. OpenAI-compatible
+    // providers (DeepSeek, OpenRouter, etc) keep native streaming.
+    const provider_check = model.startsWith("google/") || model.startsWith("anthropic/");
+    const stream = clientWantsStream && !provider_check;
+    const fakeStream = clientWantsStream && provider_check;
+    if (fakeStream) {
+      body.stream = false;  // Force non-streaming upstream
+    }
 
     // ── Idempotency-Key 處理（OpenAI 相容 header） ──
     idempotencyKey = req.headers.get("idempotency-key");
@@ -335,6 +346,41 @@ export async function POST(req: NextRequest) {
       billed_ntd: billedNtd,
       latency_ms: latencyMs,
     });
+
+    // If client wanted streaming but we forced non-streaming upstream
+    // (Gemini/Anthropic workaround), emit response as a single SSE chunk.
+    if (fakeStream) {
+      const choices = (responseBody as Record<string, unknown>).choices as Array<Record<string, unknown>> | undefined;
+      const content = choices?.[0]?.message
+        ? ((choices[0].message as Record<string, unknown>).content as string) ?? ""
+        : "";
+      const chunkId = `chatcmpl-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const sseChunk = {
+        id: chunkId,
+        object: "chat.completion.chunk",
+        created: Math.floor(Date.now() / 1000),
+        model: (responseBody as Record<string, unknown>).model || model,
+        choices: [
+          {
+            index: 0,
+            delta: { role: "assistant", content },
+            finish_reason: "stop",
+          },
+        ],
+      };
+      const sseBody = `data: ${JSON.stringify(sseChunk)}\n\ndata: [DONE]\n\n`;
+      return new Response(sseBody, {
+        headers: {
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache",
+          Connection: "keep-alive",
+          "X-Powered-By": "N+Star API Gateway",
+          "X-Provider": provider,
+          "X-Request-Id": requestId,
+          "X-Stream-Mode": "fake",
+        },
+      });
+    }
 
     return NextResponse.json(responseBody, {
       headers: { "X-Request-Id": requestId, "X-Provider": provider },
