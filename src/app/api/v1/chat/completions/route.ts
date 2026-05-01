@@ -151,6 +151,21 @@ export async function POST(req: NextRequest) {
       model,
       stream,
       idempotency: !!idempotencyKey,
+      // DEBUG: log message shapes for OpenClaw integration debugging
+      messages_debug: ((body.messages as Array<Record<string, unknown>>) || []).map((m, i) => ({
+        i,
+        role: m.role,
+        content_type: typeof m.content,
+        content_is_array: Array.isArray(m.content),
+        content_preview:
+          typeof m.content === "string"
+            ? (m.content as string).slice(0, 100)
+            : Array.isArray(m.content)
+              ? `[${(m.content as Array<unknown>).length} parts: ${(m.content as Array<Record<string, unknown>>)
+                  .map((p) => (typeof p === "object" && p ? (p.type ?? "?") : typeof p))
+                  .join(",")}]`
+              : `<${typeof m.content}>`,
+      })),
     });
 
     const { response: providerRes, provider } = await callProviderWithRetry(model, body);
