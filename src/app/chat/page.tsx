@@ -48,10 +48,7 @@ export default function ChatPage() {
     try {
       const res = await fetch("/api/v1/chat/completions", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.NEXT_PUBLIC_DEMO_KEY ?? ""}`,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model,
           messages: newMessages.map((m) => ({ role: m.role, content: m.content })),

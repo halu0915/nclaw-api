@@ -85,6 +85,40 @@ export async function validateApiKey(
   return { valid: false, error: "Invalid API key" };
 }
 
+const DEMO_ALLOWED_ORIGINS = [
+  "https://api.nplusstar.ai",
+  "https://www.nplusstar.ai",
+  "https://nplusstar.ai",
+  "http://localhost:3000",
+  "http://localhost",
+];
+
+function isSameOriginDemoRequest(req: NextRequest): boolean {
+  const origin = req.headers.get("origin") || "";
+  const referer = req.headers.get("referer") || "";
+  return DEMO_ALLOWED_ORIGINS.some(
+    (o) => (origin && origin.startsWith(o)) || (referer && referer.startsWith(o))
+  );
+}
+
+export async function validateApiKeyOrSameOriginDemo(
+  req: NextRequest
+): Promise<{ valid: true; apiKey: ApiKey; isDemo: boolean } | { valid: false; error: string }> {
+  const result = await validateApiKey(req);
+  if (result.valid) return { ...result, isDemo: false };
+
+  if (!isSameOriginDemoRequest(req)) return result;
+
+  const demoKey = process.env.DEMO_API_KEY;
+  if (!demoKey) return result;
+
+  await ensureDemoTenant();
+  const dbKey = await findKeyInDb(demoKey);
+  if (dbKey) return { valid: true, apiKey: dbKey, isDemo: true };
+
+  return result;
+}
+
 export function checkModelPermission(
   apiKey: ApiKey,
   model: string

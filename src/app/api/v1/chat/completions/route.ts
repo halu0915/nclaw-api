@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { validateApiKey, checkModelPermission } from "@/lib/auth";
+import { validateApiKeyOrSameOriginDemo, checkModelPermission } from "@/lib/auth";
 import { recordUsage } from "@/lib/usage";
 import { calculateCost } from "@/lib/pricing";
 import { callProviderWithRetry, extractUsage } from "@/lib/providers";
@@ -18,7 +18,7 @@ const MAX_BODY_BYTES = 1_000_000; // 1 MB; OpenAI 單請求上限約 200K tokens
 
 export async function POST(req: NextRequest) {
   const requestId = newRequestId();
-  const auth = await validateApiKey(req);
+  const auth = await validateApiKeyOrSameOriginDemo(req);
   if (!auth.valid) {
     log.warn("chat.auth_fail", { request_id: requestId, error: auth.error });
     return NextResponse.json(
