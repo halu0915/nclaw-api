@@ -7,6 +7,11 @@ interface Message {
   content: string;
 }
 
+interface Me {
+  email: string;
+  companyName?: string;
+}
+
 const MODELS = [
   { id: "google/gemini-2.5-flash", name: "Gemini Flash", desc: "快速回覆" },
   { id: "anthropic/claude-sonnet-4-6", name: "Claude Sonnet", desc: "精準分析" },
@@ -29,11 +34,40 @@ export default function ChatPage() {
   const [loading, setLoading] = useState(false);
   const [model, setModel] = useState(MODELS[0].id);
   const [showModels, setShowModels] = useState(false);
+  const [me, setMe] = useState<Me | null>(null);
+  const [showAccount, setShowAccount] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  useEffect(() => {
+    fetch("/api/customer/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => d && setMe({ email: d.customer.email, companyName: d.customer.companyName }))
+      .catch(() => {});
+  }, []);
+
+  const logout = async () => {
+    document.cookie = "nclaw_token=; path=/; max-age=0";
+    try {
+      const csrfRes = await fetch("/api/auth/csrf");
+      const { csrfToken } = await csrfRes.json();
+      await fetch("/api/auth/signout", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `csrfToken=${csrfToken}`,
+      });
+    } catch {}
+    document.cookie.split(";").forEach((c) => {
+      const name = c.trim().split("=")[0];
+      if (name.includes("authjs") || name.includes("next-auth")) {
+        document.cookie = `${name}=; path=/; max-age=0; secure`;
+      }
+    });
+    window.location.href = "/login";
+  };
 
   const sendMessage = async (text?: string) => {
     const msg = text || input.trim();
@@ -83,31 +117,69 @@ export default function ChatPage() {
             </div>
             <span className="font-semibold">N+Claw Chat</span>
           </a>
-          <div className="relative">
-            <button
-              onClick={() => setShowModels(!showModels)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-700 text-sm text-gray-300 hover:border-gray-500 transition-colors"
-            >
-              {selectedModel.name}
-              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-            {showModels && (
-              <div className="absolute right-0 top-full mt-1 w-56 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-10">
-                {MODELS.map((m) => (
-                  <button
-                    key={m.id}
-                    onClick={() => { setModel(m.id); setShowModels(false); }}
-                    className={`w-full text-left px-4 py-3 text-sm hover:bg-gray-800 transition-colors first:rounded-t-lg last:rounded-b-lg ${
-                      m.id === model ? "bg-gray-800 text-white" : "text-gray-300"
-                    }`}
-                  >
-                    <div className="font-medium">{m.name}</div>
-                    <div className="text-xs text-gray-500">{m.desc}</div>
-                  </button>
-                ))}
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <button
+                onClick={() => { setShowModels(!showModels); setShowAccount(false); }}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-700 text-sm text-gray-300 hover:border-gray-500 transition-colors"
+              >
+                {selectedModel.name}
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {showModels && (
+                <div className="absolute right-0 top-full mt-1 w-56 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-10">
+                  {MODELS.map((m) => (
+                    <button
+                      key={m.id}
+                      onClick={() => { setModel(m.id); setShowModels(false); }}
+                      className={`w-full text-left px-4 py-3 text-sm hover:bg-gray-800 transition-colors first:rounded-t-lg last:rounded-b-lg ${
+                        m.id === model ? "bg-gray-800 text-white" : "text-gray-300"
+                      }`}
+                    >
+                      <div className="font-medium">{m.name}</div>
+                      <div className="text-xs text-gray-500">{m.desc}</div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {me ? (
+              <div className="relative">
+                <button
+                  onClick={() => { setShowAccount(!showAccount); setShowModels(false); }}
+                  className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-gray-900 font-semibold text-sm flex items-center justify-center shadow shadow-amber-500/30 hover:shadow-amber-400/50 transition-shadow"
+                  aria-label="account menu"
+                >
+                  {me.email[0]?.toUpperCase() || "U"}
+                </button>
+                {showAccount && (
+                  <div className="absolute right-0 top-full mt-1 w-64 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-10 overflow-hidden">
+                    <div className="px-4 py-3 border-b border-gray-800">
+                      <div className="text-xs text-gray-500">登入身分</div>
+                      <div className="text-sm text-white truncate">{me.email}</div>
+                      {me.companyName && <div className="text-xs text-gray-400 truncate">{me.companyName}</div>}
+                    </div>
+                    <a href="/dashboard" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-800">後台 Dashboard</a>
+                    <a href="/billing" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-800">帳務 / 用量</a>
+                    <button
+                      onClick={logout}
+                      className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-800 border-t border-gray-800"
+                    >
+                      登出
+                    </button>
+                  </div>
+                )}
               </div>
+            ) : (
+              <a
+                href="/login"
+                className="px-3 py-1.5 rounded-lg text-sm text-gray-300 border border-gray-700 hover:border-gray-500 transition-colors"
+              >
+                登入
+              </a>
             )}
           </div>
         </div>
