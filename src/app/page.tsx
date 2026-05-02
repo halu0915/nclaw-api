@@ -128,14 +128,22 @@ export default function Home() {
 
       {/* Header */}
       <header className="border-b border-white/5 backdrop-blur-xl bg-gray-950/80 sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between gap-6">
+          <a href="/" className="flex items-center gap-3 shrink-0">
             <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-lg flex items-center justify-center font-bold text-sm shadow-lg shadow-blue-500/20">
               N+
             </div>
             <span className="text-xl font-semibold">N+Claw API</span>
-          </div>
-          <div className="flex items-center gap-4">
+          </a>
+
+          <nav className="hidden md:flex items-center gap-6 text-sm">
+            <a href="/chat" className="text-gray-400 hover:text-white transition-colors">Chat</a>
+            <a href="https://nplusstar.ai/pro" className="text-gray-400 hover:text-white transition-colors">Pro</a>
+            <a href="https://nplusstar.ai/bot" className="text-gray-400 hover:text-white transition-colors">Bot</a>
+            <a href="/" className="text-white font-medium border-b border-blue-400 pb-0.5">Developer</a>
+          </nav>
+
+          <div className="flex items-center gap-3 sm:gap-4 shrink-0">
             <a href="/login" className="text-sm text-gray-400 hover:text-white transition-colors">
               {lang === "zh" ? "登入" : "Login"}
             </a>
@@ -150,6 +158,13 @@ export default function Home() {
             </button>
           </div>
         </div>
+
+        <nav className="md:hidden flex items-center justify-around border-t border-white/5 py-2 text-sm">
+          <a href="/chat" className="text-gray-400 px-3 py-1">Chat</a>
+          <a href="https://nplusstar.ai/pro" className="text-gray-400 px-3 py-1">Pro</a>
+          <a href="https://nplusstar.ai/bot" className="text-gray-400 px-3 py-1">Bot</a>
+          <a href="/" className="text-white font-medium px-3 py-1 border-b border-blue-400">Developer</a>
+        </nav>
       </header>
 
       {/* Hero */}
