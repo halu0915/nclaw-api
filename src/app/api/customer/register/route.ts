@@ -30,6 +30,7 @@ export async function POST(req: NextRequest) {
     sameSite: "lax",
     maxAge: 24 * 60 * 60,
     path: "/",
+    domain: ".nplusstar.ai",
   });
 
   return res;

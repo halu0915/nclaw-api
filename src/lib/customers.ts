@@ -14,6 +14,7 @@ export interface Customer {
   status: "active" | "suspended" | "trial";
   tokenQuota: number;
   tokensUsed: number;
+  designCredits: number;
   createdAt: string;
   trialEndsAt: string;
   tenantId: string | null;
@@ -126,13 +127,53 @@ function rowToCustomer(r: Record<string, unknown>): Customer {
     status: (r.status as Customer["status"]) || "trial",
     tokenQuota: Number(r.token_quota) || PLAN_QUOTAS.free,
     tokensUsed: Number(r.tokens_used) || 0,
+    designCredits: Number(r.design_credits) || 0,
     createdAt: r.created_at ? String(r.created_at) : new Date().toISOString(),
     trialEndsAt: r.trial_ends_at ? String(r.trial_ends_at) : new Date().toISOString(),
     tenantId: (r.tenant_id as string) || null,
   };
 }
 
-const CUSTOMER_COLS = `id, tenant_id, email, password_hash, company_name, contact_name, phone, plan, api_key, status, token_quota, tokens_used, created_at, trial_ends_at`;
+const CUSTOMER_COLS = `id, tenant_id, email, password_hash, company_name, contact_name, phone, plan, api_key, status, token_quota, tokens_used, design_credits, created_at, trial_ends_at`;
+
+export async function adjustDesignCredits(
+  customerId: string,
+  delta: number
+): Promise<{ designCredits: number } | { error: string }> {
+  try {
+    const result = await query<{ design_credits: number }>(
+      `UPDATE customers
+         SET design_credits = GREATEST(0, design_credits + $1)
+         WHERE id = $2
+         RETURNING design_credits`,
+      [delta, customerId]
+    );
+    if (result.rows.length === 0) return { error: "Customer not found" };
+    return { designCredits: Number(result.rows[0].design_credits) };
+  } catch (err) {
+    console.error("[customers] adjustDesignCredits error:", err);
+    return { error: "Credits update failed" };
+  }
+}
+
+export async function deductDesignCreditAtomic(
+  customerId: string
+): Promise<{ designCredits: number } | { error: string }> {
+  try {
+    const result = await query<{ design_credits: number }>(
+      `UPDATE customers
+         SET design_credits = design_credits - 1
+         WHERE id = $1 AND design_credits > 0
+         RETURNING design_credits`,
+      [customerId]
+    );
+    if (result.rows.length === 0) return { error: "Insufficient design credits" };
+    return { designCredits: Number(result.rows[0].design_credits) };
+  } catch (err) {
+    console.error("[customers] deductDesignCreditAtomic error:", err);
+    return { error: "Credit deduct failed" };
+  }
+}
 
 export async function registerCustomer(data: {
   email: string;
@@ -265,6 +306,8 @@ export function getCustomerPublic(c: Customer) {
     status: c.status,
     tokenQuota: c.tokenQuota,
     tokensUsed: c.tokensUsed,
+    designCredits: c.designCredits,
+    tenantId: c.tenantId,
     createdAt: c.createdAt,
     trialEndsAt: c.trialEndsAt,
     planPrice: PLAN_PRICES[c.plan] || 0,

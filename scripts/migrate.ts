@@ -233,9 +233,15 @@ async function migrate() {
         status          TEXT NOT NULL DEFAULT 'trial',
         token_quota     BIGINT NOT NULL DEFAULT 1000000,
         tokens_used     BIGINT NOT NULL DEFAULT 0,
+        design_credits  INTEGER NOT NULL DEFAULT 0,
         trial_ends_at   TIMESTAMP WITH TIME ZONE,
         created_at      TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
       );
+    `);
+    // Idempotent column add for existing deploys
+    await client.query(`
+      ALTER TABLE customers
+        ADD COLUMN IF NOT EXISTS design_credits INTEGER NOT NULL DEFAULT 0;
     `);
     console.log("[migrate] Table customers created.");
 
