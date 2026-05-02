@@ -1,21 +1,45 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+
+// Only allow redirect to *.nplusstar.ai (or relative path)
+function safeRedirect(target: string | null): string | null {
+  if (!target) return null;
+  if (target.startsWith("/")) return target;
+  try {
+    const u = new URL(target);
+    if (u.hostname === "nplusstar.ai" || u.hostname.endsWith(".nplusstar.ai")) {
+      return u.toString();
+    }
+  } catch {}
+  return null;
+}
 
 export default function LoginPage() {
   const router = useRouter();
+  const params = useSearchParams();
+  const redirectTo = safeRedirect(params.get("redirect"));
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const goNext = () => {
+    if (redirectTo && redirectTo.startsWith("http")) {
+      window.location.href = redirectTo;
+    } else {
+      router.push(redirectTo || "/dashboard");
+    }
+  };
 
   // Check if already logged in
   useEffect(() => {
     fetch("/api/auth/session")
       .then((r) => r.json())
-      .then((s) => { if (s?.user) router.push("/dashboard"); })
+      .then((s) => { if (s?.user) goNext(); })
       .catch(() => {});
-  }, [router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,7 +60,7 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/dashboard");
+    goNext();
   };
 
   const handleGoogleLogin = async () => {
@@ -57,7 +81,7 @@ export default function LoginPage() {
     const callbackInput = document.createElement("input");
     callbackInput.type = "hidden";
     callbackInput.name = "callbackUrl";
-    callbackInput.value = "/dashboard";
+    callbackInput.value = redirectTo || "/dashboard";
     form.appendChild(callbackInput);
 
     document.body.appendChild(form);

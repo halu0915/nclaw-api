@@ -40,6 +40,24 @@ const nextConfig: NextConfig = {
         destination: "https://nclaw.nplusstar.ai/download/:path*",
         permanent: true,
       },
+      {
+        source: "/login",
+        has: [{ type: "host", value: "api.nplusstar.ai" }],
+        destination: "https://nclaw.nplusstar.ai/login",
+        permanent: true,
+      },
+      {
+        source: "/register",
+        has: [{ type: "host", value: "api.nplusstar.ai" }],
+        destination: "https://nclaw.nplusstar.ai/register",
+        permanent: true,
+      },
+      {
+        source: "/dashboard",
+        has: [{ type: "host", value: "api.nplusstar.ai" }],
+        destination: "https://nclaw.nplusstar.ai/dashboard",
+        permanent: true,
+      },
     ];
   },
 };
