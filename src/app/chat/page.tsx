@@ -118,10 +118,16 @@ export default function ChatPage() {
         <div className="max-w-4xl mx-auto px-4 py-6">
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center min-h-[60vh]">
-              <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center font-bold text-2xl mb-6">
-                N+
+              <div className="relative mb-6">
+                <div
+                  className="absolute -inset-2 bg-gradient-to-r from-amber-400 via-blue-500 to-amber-400 rounded-3xl blur-lg opacity-60"
+                  style={{ animation: "spin 8s linear infinite" }}
+                />
+                <div className="relative w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-2xl flex items-center justify-center font-bold text-2xl text-white shadow-lg shadow-blue-500/30">
+                  N+
+                </div>
               </div>
-              <h2 className="text-2xl font-semibold mb-2">N+Claw AI Assistant</h2>
+              <h2 className="text-2xl font-semibold mb-2 bg-gradient-to-r from-white via-amber-100 to-amber-300 bg-clip-text text-transparent">N+Claw Chat</h2>
               <p className="text-gray-400 mb-8 text-center max-w-md">
                 MEP 機電工程 AI 助手，協助估算、法規查詢、材料比較等專業問題
               </p>
