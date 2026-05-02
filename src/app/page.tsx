@@ -66,8 +66,9 @@ function BackgroundOrbs() {
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none">
       <div className="absolute -top-40 -left-40 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl animate-pulse" style={{ animationDuration: "8s" }} />
-      <div className="absolute top-1/3 -right-20 w-80 h-80 bg-purple-600/15 rounded-full blur-3xl animate-pulse" style={{ animationDuration: "10s", animationDelay: "2s" }} />
+      <div className="absolute top-1/3 -right-20 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDuration: "10s", animationDelay: "2s" }} />
       <div className="absolute -bottom-20 left-1/3 w-72 h-72 bg-cyan-600/10 rounded-full blur-3xl animate-pulse" style={{ animationDuration: "12s", animationDelay: "4s" }} />
+      <div className="absolute top-1/2 left-1/2 w-64 h-64 -translate-x-1/2 bg-amber-400/5 rounded-full blur-3xl animate-pulse" style={{ animationDuration: "14s", animationDelay: "6s" }} />
     </div>
   );
 }
@@ -127,20 +128,20 @@ export default function Home() {
       <BackgroundOrbs />
 
       {/* Header */}
-      <header className="border-b border-white/5 backdrop-blur-xl bg-gray-950/80 sticky top-0 z-50">
+      <header className="border-b border-amber-400/10 backdrop-blur-xl bg-gray-950/80 sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between gap-6">
           <a href="/" className="flex items-center gap-3 shrink-0">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-lg flex items-center justify-center font-bold text-sm shadow-lg shadow-blue-500/20">
+            <div className="w-8 h-8 bg-gradient-to-br from-amber-300 via-amber-400 to-amber-600 rounded-lg flex items-center justify-center font-bold text-sm text-gray-900 shadow-lg shadow-amber-500/30 ring-1 ring-amber-200/40">
               N+
             </div>
-            <span className="text-xl font-semibold">N+Claw API</span>
+            <span className="text-xl font-semibold bg-gradient-to-r from-white to-amber-200 bg-clip-text text-transparent">N+Claw API</span>
           </a>
 
           <nav className="hidden md:flex items-center gap-6 text-sm">
             <a href="/chat" className="text-gray-400 hover:text-white transition-colors">Chat</a>
             <a href="https://nplusstar.ai/pro" className="text-gray-400 hover:text-white transition-colors">Pro</a>
             <a href="https://nplusstar.ai/bot" className="text-gray-400 hover:text-white transition-colors">Bot</a>
-            <a href="/" className="text-white font-medium border-b border-blue-400 pb-0.5">Developer</a>
+            <a href="/" className="text-white font-medium border-b border-amber-400 pb-0.5">Developer</a>
           </nav>
 
           <div className="flex items-center gap-3 sm:gap-4 shrink-0">
@@ -170,13 +171,13 @@ export default function Home() {
       {/* Hero */}
       <main className="max-w-6xl mx-auto px-6 relative z-10">
         <div className="text-center py-24 sm:py-32">
-          <h1 className="text-4xl sm:text-6xl font-bold mb-6 bg-gradient-to-r from-white via-blue-200 to-cyan-300 bg-clip-text text-transparent leading-tight">
+          <h1 className="text-4xl sm:text-6xl font-bold mb-6 bg-gradient-to-r from-white via-amber-200 to-amber-400 bg-clip-text text-transparent leading-tight">
             {l.hero}
           </h1>
           <p className="text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto mb-6">{l.heroSub}</p>
 
           {/* Typed demo */}
-          <div className="bg-gray-900/60 backdrop-blur border border-white/10 rounded-2xl p-6 max-w-lg mx-auto mb-10">
+          <div className="bg-gray-900/60 backdrop-blur border border-amber-400/20 rounded-2xl p-6 max-w-lg mx-auto mb-10 shadow-lg shadow-amber-500/5">
             <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
               <div className="w-2 h-2 rounded-full bg-red-500" />
               <div className="w-2 h-2 rounded-full bg-yellow-500" />
@@ -197,7 +198,7 @@ export default function Home() {
             </a>
             <a
               href="/register"
-              className="px-8 py-4 border border-white/10 hover:border-white/25 rounded-xl text-lg font-semibold transition-all backdrop-blur hover:bg-white/5"
+              className="px-8 py-4 border border-amber-400/30 hover:border-amber-400/60 rounded-xl text-lg font-semibold transition-all backdrop-blur hover:bg-amber-400/5 text-amber-100"
             >
               {l.register}
             </a>
@@ -226,7 +227,7 @@ export default function Home() {
 
         {/* Pricing */}
         <div className="mb-24">
-          <h2 className="text-3xl font-bold text-center mb-3 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">{l.pricing}</h2>
+          <h2 className="text-3xl font-bold text-center mb-3 bg-gradient-to-r from-white via-amber-100 to-amber-300 bg-clip-text text-transparent">{l.pricing}</h2>
           <p className="text-center text-gray-500 text-sm mb-10">{lang === "zh" ? "14 天免費試用，隨時可升降級" : "14-day free trial, upgrade or downgrade anytime"}</p>
           <div className="grid md:grid-cols-4 gap-4">
             {plans.map((plan) => (
@@ -234,12 +235,12 @@ export default function Home() {
                 key={plan.name}
                 className={`rounded-2xl p-6 border backdrop-blur-sm transition-all duration-300 hover:scale-105 ${
                   plan.name === l.pro
-                    ? "border-blue-500/50 bg-gradient-to-b from-blue-600/10 to-transparent shadow-lg shadow-blue-600/10"
+                    ? "border-amber-400/50 bg-gradient-to-b from-amber-500/10 to-transparent shadow-lg shadow-amber-500/15 ring-1 ring-amber-300/20"
                     : "border-white/10 bg-gradient-to-b from-white/5 to-transparent hover:border-white/20"
                 }`}
               >
                 {plan.name === l.pro && (
-                  <span className="text-xs text-blue-400 font-semibold">{lang === "zh" ? "最受歡迎" : "Most Popular"}</span>
+                  <span className="text-xs text-amber-300 font-semibold tracking-wide">{lang === "zh" ? "★ 最受歡迎" : "★ Most Popular"}</span>
                 )}
                 <h3 className="text-lg font-semibold mt-1">{plan.name}</h3>
                 <div className="text-2xl font-bold my-3">
@@ -255,7 +256,7 @@ export default function Home() {
                 </ul>
                 <a href="/register" className={`block mt-4 text-center py-2 rounded-lg text-sm font-medium transition-colors ${
                   plan.name === l.pro
-                    ? "bg-blue-600 hover:bg-blue-500 text-white"
+                    ? "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-gray-900 shadow shadow-amber-500/30"
                     : "border border-white/10 hover:bg-white/5 text-gray-300"
                 }`}>
                   {lang === "zh" ? "開始使用" : "Get Started"}
@@ -267,7 +268,7 @@ export default function Home() {
 
         {/* Endpoints */}
         <div className="mb-24">
-          <h2 className="text-3xl font-bold text-center mb-8 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">{l.endpoints}</h2>
+          <h2 className="text-3xl font-bold text-center mb-8 bg-gradient-to-r from-white via-amber-100 to-amber-300 bg-clip-text text-transparent">{l.endpoints}</h2>
           <div className="bg-gradient-to-b from-white/5 to-transparent border border-white/10 rounded-2xl overflow-hidden backdrop-blur-sm">
             <table className="w-full text-sm">
               <thead className="bg-white/5">
