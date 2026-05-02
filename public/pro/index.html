@@ -4,407 +4,106 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>N+Claw Pro — 工程業 AI 同事 | 恩加斯達國際</title>
-<meta name="description" content="工程業個人 worker 的桌面 AI 同事。預裝 8 個工程 skill — 規範查詢、估算報價、CAD 讀取、PDF 圖說解析。零程式，雙擊即用。">
+<meta name="description" content="工程業個人 worker 的 AI 同事。預裝法規查詢、估算報價、消防設計、CAD 讀取等工程 skill。">
 <meta property="og:title" content="N+Claw Pro — 工程業 AI 同事">
-<meta property="og:description" content="桌面 AI 同事，零程式雙擊即用，工程業專屬 skill 預裝。">
+<meta property="og:description" content="工程業個人 worker 的 AI 同事，預裝 8 個工程 skill。">
 <meta property="og:image" content="https://nplusstar.ai/og-image.png">
-<meta property="og:url" content="https://nclaw.nplusstar.ai/pro">
+<meta property="og:url" content="https://nplusstar.ai/pro">
 <link rel="icon" href="/favicon.ico" sizes="32x32">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;600;700;900&family=Inter:wght@200;300;400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #faf9f7;
-    --bg-tint: #f5f0e7;
-    --paper: #ffffff;
-    --line: rgba(28,25,23,0.08);
-    --line-strong: rgba(28,25,23,0.14);
-    --gold: #c8a97e;
-    --gold-deep: #a07d55;
-    --gold-soft: rgba(200,169,126,0.18);
-    --ink: #1c1917;
-    --ink-mid: #57534e;
-    --ink-soft: #78716c;
-    --ink-low: #a8a29e;
-  }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
   body {
-    font-family: "Inter", -apple-system, "Helvetica Neue", "PingFang TC", sans-serif;
-    background: var(--bg);
-    color: var(--ink);
-    line-height: 1.7;
-    -webkit-font-smoothing: antialiased;
-    text-rendering: optimizeLegibility;
+    font-family: -apple-system, "Helvetica Neue", "PingFang TC", sans-serif;
+    background: linear-gradient(180deg, #020617 0%, #0f172a 50%, #020617 100%);
+    color: #f1f5f9;
+    min-height: 100vh;
+    line-height: 1.6;
   }
-  .serif {
-    font-family: "Noto Serif TC", "Songti TC", "Source Han Serif TC", serif;
-  }
-  .display {
-    font-family: "Noto Serif TC", "Songti TC", serif;
-    font-weight: 300; letter-spacing: -0.01em;
-  }
-  .mono { font-family: "SF Mono", "Menlo", monospace; }
-
-  /* ─── NAV ─── */
-  nav.bar {
-    position: sticky; top: 0; z-index: 50;
-    background: rgba(250,249,247,0.85);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--line);
-    padding: 16px 28px;
+  .nav {
+    padding: 16px 24px;
     display: flex; align-items: center; justify-content: space-between;
-    gap: 28px; flex-wrap: wrap;
+    border-bottom: 1px solid rgba(251,191,36,0.12);
+    flex-wrap: wrap; gap: 12px;
   }
-  .brand {
-    display: flex; align-items: center; gap: 10px;
-    text-decoration: none; color: var(--ink);
-    font-weight: 700; font-size: 0.92rem;
-    letter-spacing: 0.16em; text-transform: uppercase;
-  }
-  .brand .dot { width: 6px; height: 6px; background: var(--gold); border-radius: 50%; }
-  .nav-links { display: flex; gap: 28px; }
-  .nav-links a {
-    color: var(--ink-soft); text-decoration: none;
-    font-size: 0.82rem; letter-spacing: 0.12em;
-    text-transform: uppercase; transition: color 0.2s;
-  }
-  .nav-links a:hover { color: var(--ink); }
-  .nav-links a.active {
-    color: var(--gold-deep); position: relative;
-  }
-  .nav-links a.active::after {
-    content: ""; position: absolute; left: 0; right: 0; bottom: -20px;
-    height: 1px; background: var(--gold);
-  }
-
-  /* ─── HERO ─── */
-  .hero {
-    position: relative;
-    padding: 120px 24px 100px;
-    text-align: center;
-    overflow: hidden;
-  }
-  .hero::before {
-    content: ""; position: absolute; inset: 0;
-    background:
-      radial-gradient(70% 60% at 50% 20%, rgba(200,169,126,0.10), transparent 70%),
-      radial-gradient(40% 30% at 80% 90%, rgba(200,169,126,0.06), transparent 70%);
-    pointer-events: none;
-  }
-  .hero-inner { position: relative; max-width: 920px; margin: 0 auto; }
-  .eyebrow {
-    display: inline-block;
-    font-size: 0.7rem; color: var(--gold-deep);
-    letter-spacing: 0.4em; text-transform: uppercase;
-    margin-bottom: 32px;
-  }
-  .gold-rule { width: 64px; height: 1px; background: var(--gold); margin: 0 auto; }
-  .hero h1.display {
-    font-size: clamp(3rem, 8vw, 6rem);
-    font-weight: 300; line-height: 1.08;
-    margin: 36px 0 28px;
-    color: var(--ink);
-  }
-  .hero h1 em {
-    font-style: italic; font-weight: 400;
-    color: var(--gold-deep);
-  }
-  .hero-quote {
-    font-family: "Noto Serif TC", serif;
-    font-size: clamp(1.1rem, 2vw, 1.35rem);
-    font-weight: 400; color: var(--ink-mid);
-    max-width: 580px; margin: 0 auto 14px;
-    line-height: 1.9; letter-spacing: 0.02em;
-  }
-  .hero-sub {
-    font-family: "Inter", serif;
-    font-size: 0.78rem; color: var(--ink-low);
-    letter-spacing: 0.18em; text-transform: uppercase;
-    margin-bottom: 56px;
-    font-style: italic;
-  }
-  .cta-row { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; }
+  .nav a { color: #94a3b8; text-decoration: none; font-size: 0.9rem; }
+  .nav a:hover { color: #f1f5f9; }
+  .nav-brand { font-weight: 700; color: #f1f5f9; font-size: 1rem; }
+  .nav-links { display: flex; gap: 20px; }
+  .nav-links a.active { color: #fbbf24; border-bottom: 1px solid #fbbf24; padding-bottom: 2px; }
+  main { max-width: 880px; margin: 0 auto; padding: 48px 24px; }
+  .hero { text-align: center; margin-bottom: 64px; }
+  .hero img { width: 120px; height: 120px; border-radius: 24px; margin: 0 auto 24px; box-shadow: 0 12px 32px rgba(0,0,0,0.3); }
+  .hero h1 { font-size: 3rem; margin-bottom: 12px; letter-spacing: -1px; }
+  .hero .tag { font-size: 1.25rem; color: #cbd5e1; margin-bottom: 8px; }
+  .hero .sub { font-size: 0.85rem; color: #64748b; margin-bottom: 32px; }
+  .cta { display: flex; flex-direction: column; align-items: center; gap: 8px; }
   .btn-primary {
-    display: inline-flex; align-items: center; gap: 12px;
-    background: var(--ink); color: var(--bg);
-    padding: 18px 38px;
-    font-weight: 500; font-size: 0.85rem;
-    text-decoration: none; transition: all 0.3s;
-    letter-spacing: 0.18em; text-transform: uppercase;
-    border: 1px solid var(--ink);
+    background: #2563eb; color: #fff; padding: 16px 32px;
+    border-radius: 12px; font-weight: 700; font-size: 1.1rem;
+    text-decoration: none; transition: all 0.2s;
+    box-shadow: 0 8px 24px rgba(37,99,235,0.25);
   }
-  .btn-primary:hover {
-    background: var(--gold-deep);
-    border-color: var(--gold-deep);
-    transform: translateY(-1px);
-  }
-  .btn-secondary {
-    display: inline-flex; align-items: center; gap: 8px;
-    color: var(--ink); padding: 18px 32px;
-    font-weight: 500; font-size: 0.85rem;
-    text-decoration: none; transition: all 0.3s;
-    border: 1px solid var(--ink-low);
-    letter-spacing: 0.18em; text-transform: uppercase;
-  }
-  .btn-secondary:hover { border-color: var(--ink); }
-  .meta {
-    margin-top: 32px; font-size: 0.72rem; color: var(--ink-low);
-    letter-spacing: 0.22em; text-transform: uppercase;
-  }
-  .meta-sep { display: inline-block; margin: 0 14px; opacity: 0.5; }
+  .btn-primary:hover { background: #1d4ed8; transform: translateY(-1px); }
+  .meta { font-size: 0.85rem; color: #64748b; }
 
-  /* Hero terminal mockup — paper card */
-  .terminal {
-    margin: 80px auto 0; max-width: 760px;
-    background: var(--paper);
-    border: 1px solid var(--line);
-    border-radius: 6px;
-    box-shadow: 0 30px 80px rgba(28,25,23,0.06), 0 6px 18px rgba(28,25,23,0.04);
-    overflow: hidden;
-    text-align: left;
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 64px; }
+  .card {
+    background: rgba(15,23,42,0.5); border: 1px solid rgba(148,163,184,0.15);
+    border-radius: 16px; padding: 24px;
   }
-  .terminal-bar {
-    display: flex; align-items: center; gap: 8px;
-    padding: 12px 18px; background: #f8f6f1;
-    border-bottom: 1px solid var(--line);
+  .card-num {
+    display: inline-block; font-size: 0.7rem; font-weight: 700;
+    color: #fbbf24; letter-spacing: 0.18em; margin-bottom: 14px;
+    font-family: -apple-system, "SF Mono", monospace;
   }
-  .terminal-bar .dot { width: 10px; height: 10px; border-radius: 50%; }
-  .terminal-bar .dot.r { background: #ff5f57; }
-  .terminal-bar .dot.y { background: #febc2e; }
-  .terminal-bar .dot.g { background: #28c840; }
-  .terminal-bar .title {
-    margin-left: auto; margin-right: auto;
-    color: var(--ink-soft); font-size: 0.74rem;
-    letter-spacing: 0.2em; text-transform: uppercase;
-  }
-  .terminal-body {
-    padding: 28px 32px;
-    font-family: "Noto Serif TC", serif;
-    font-size: 0.94rem; line-height: 1.9;
-    color: var(--ink-mid);
-  }
-  .terminal-body .prompt { color: var(--gold-deep); font-family: "SF Mono", monospace; }
-  .terminal-body .you { color: var(--ink); }
-  .terminal-body .skill {
-    display: inline-block; background: var(--gold-soft); color: var(--gold-deep);
-    padding: 2px 10px; font-size: 0.72rem;
-    letter-spacing: 0.14em; text-transform: uppercase;
-    font-family: "Inter", sans-serif; font-weight: 500;
-  }
-  .terminal-body .dim { color: var(--ink-low); font-size: 0.86rem; }
-  .terminal-body strong { color: var(--gold-deep); font-weight: 600; }
+  .card h3 { font-size: 1.05rem; margin-bottom: 8px; color: #f1f5f9; }
+  .card p { font-size: 0.9rem; color: #94a3b8; }
 
-  /* ─── SECTION ─── */
-  section.block { padding: 120px 24px; }
-  section.block.tint { background: var(--bg-tint); }
-  .block-inner { max-width: 1080px; margin: 0 auto; }
-  .block-eyebrow {
-    font-size: 0.7rem; color: var(--gold-deep); letter-spacing: 0.4em;
-    text-transform: uppercase; margin-bottom: 18px; text-align: center;
-  }
-  .block-title {
-    font-family: "Noto Serif TC", serif;
-    font-size: clamp(2rem, 4vw, 2.8rem);
-    font-weight: 400; letter-spacing: -0.005em;
-    text-align: center; margin-bottom: 18px;
-    color: var(--ink);
-    line-height: 1.4;
-  }
-  .block-sub {
-    font-family: "Noto Serif TC", serif;
-    font-size: 1.05rem; color: var(--ink-mid); text-align: center;
-    max-width: 620px; margin: 0 auto 80px; line-height: 1.9;
-  }
-  .block-sub strong { color: var(--gold-deep); font-weight: 500; }
-
-  /* Skills grid */
-  .grid-4 {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 1px;
-    background: var(--line);
-    border: 1px solid var(--line);
-  }
-  .skill-card {
-    background: var(--bg);
-    padding: 44px 36px;
-    transition: background 0.3s;
-  }
-  .skill-card:hover { background: var(--paper); }
-  .skill-num {
-    font-family: "SF Mono", monospace; font-size: 0.7rem;
-    color: var(--gold-deep); letter-spacing: 0.24em;
-    margin-bottom: 22px;
-  }
-  .skill-card h3 {
-    font-family: "Noto Serif TC", serif;
-    font-size: 1.4rem; font-weight: 500; color: var(--ink);
-    margin-bottom: 14px; letter-spacing: 0.01em;
-  }
-  .skill-card p {
-    font-size: 0.92rem; color: var(--ink-mid);
-    line-height: 1.85;
-  }
-
-  /* vs Comparison */
-  .versus {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 0;
-    background: var(--paper);
-    border: 1px solid var(--line);
-  }
-  .versus-col { padding: 44px 38px; }
-  .versus-col + .versus-col { border-left: 1px solid var(--line); }
-  .versus-col.us { background: var(--bg-tint); }
-  .versus-col h4 {
-    font-size: 0.7rem; color: var(--ink-low); letter-spacing: 0.24em;
-    text-transform: uppercase; margin-bottom: 14px;
-  }
-  .versus-col.us h4 { color: var(--gold-deep); }
-  .versus-col h3 {
-    font-family: "Noto Serif TC", serif;
-    font-size: 1.55rem; font-weight: 500; margin-bottom: 28px;
-    color: var(--ink);
-  }
-  .versus ul { list-style: none; }
-  .versus li {
-    padding: 12px 0; color: var(--ink-mid); font-size: 0.94rem;
-    border-bottom: 1px solid var(--line); line-height: 1.7;
-    display: flex; gap: 12px;
-  }
-  .versus li:last-child { border-bottom: none; }
-  .versus li::before {
-    content: "—"; color: var(--ink-low); flex-shrink: 0;
-    width: 14px;
-  }
-  .versus .us li::before { content: "✦"; color: var(--gold); }
-
-  /* Steps */
-  .steps {
-    max-width: 760px; margin: 0 auto;
-    display: flex; flex-direction: column;
-  }
+  h2 { font-size: 1.75rem; text-align: center; margin-bottom: 32px; letter-spacing: -0.5px; }
+  .steps { max-width: 640px; margin: 0 auto 64px; display: flex; flex-direction: column; gap: 14px; }
   .step {
-    display: flex; gap: 32px; padding: 32px 0;
-    border-bottom: 1px solid var(--line);
+    background: rgba(15,23,42,0.4); border: 1px solid rgba(148,163,184,0.12);
+    border-radius: 12px; padding: 18px; display: flex; gap: 16px;
   }
-  .step:last-child { border-bottom: none; }
   .step-num {
-    flex-shrink: 0;
-    font-family: "Noto Serif TC", serif;
-    font-size: 2rem; color: var(--gold-deep);
-    font-weight: 300; line-height: 1;
-    min-width: 60px;
+    flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%;
+    background: #2563eb; color: #fff; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
   }
-  .step-body h4 {
-    font-family: "Noto Serif TC", serif;
-    font-size: 1.2rem; font-weight: 500; margin-bottom: 8px;
-    color: var(--ink);
-  }
-  .step-body p {
-    font-size: 0.94rem; color: var(--ink-mid); line-height: 1.85;
-  }
-  .step-body code {
-    background: var(--bg-tint); padding: 3px 9px;
-    font-size: 0.84rem; font-family: "SF Mono", monospace;
-    color: var(--gold-deep);
-  }
+  .step h4 { margin-bottom: 6px; font-size: 1rem; }
+  .step p { font-size: 0.88rem; color: #94a3b8; }
 
-  /* System / Notice */
-  .grid-2 {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+  .req {
+    background: rgba(15,23,42,0.4); border: 1px solid rgba(148,163,184,0.12);
+    border-radius: 16px; padding: 24px; margin-bottom: 24px;
   }
-  .req, .notice {
-    background: var(--paper); border: 1px solid var(--line);
-    padding: 40px 36px;
-  }
-  .notice { background: var(--bg-tint); border-color: var(--gold-soft); }
-  .req h3, .notice h3 {
-    font-size: 0.7rem; color: var(--ink-low); letter-spacing: 0.26em;
-    text-transform: uppercase; margin-bottom: 22px;
-    font-weight: 600;
-  }
-  .notice h3 { color: var(--gold-deep); }
-  .req ul, .notice ul { list-style: none; }
-  .req li, .notice li {
-    padding: 8px 0; color: var(--ink-mid); font-size: 0.92rem;
-    line-height: 1.7;
-  }
-  .req li::before, .notice li::before {
-    content: "·"; color: var(--gold); margin-right: 12px;
-  }
-  .notice .contact {
-    margin-top: 24px; padding-top: 20px;
-    border-top: 1px solid var(--gold-soft);
-    font-size: 0.84rem; color: var(--ink-soft);
-  }
-  .notice a { color: var(--gold-deep); text-decoration: none; }
-  .notice a:hover { text-decoration: underline; }
+  .req h2 { font-size: 1.15rem; text-align: left; margin-bottom: 16px; }
+  .req ul { list-style: none; }
+  .req li { font-size: 0.9rem; color: #94a3b8; padding: 4px 0; }
 
-  /* Final CTA */
-  .final-cta {
-    text-align: center;
-    padding: 140px 24px;
-    background:
-      radial-gradient(60% 80% at 50% 50%, rgba(200,169,126,0.10), transparent 70%),
-      var(--bg);
-    border-top: 1px solid var(--line);
-    border-bottom: 1px solid var(--line);
+  .notice {
+    background: rgba(217, 119, 6, 0.08);
+    border: 1px solid rgba(217, 119, 6, 0.25);
+    border-radius: 16px; padding: 24px;
   }
-  .final-cta h2 {
-    font-family: "Noto Serif TC", serif;
-    font-size: clamp(2.2rem, 4.5vw, 3.4rem);
-    font-weight: 300; letter-spacing: -0.01em;
-    margin-bottom: 18px; color: var(--ink);
-    line-height: 1.4;
-  }
-  .final-cta h2 em { font-style: italic; color: var(--gold-deep); }
-  .final-cta p {
-    color: var(--ink-mid); margin-bottom: 44px;
-    font-size: 1.05rem; font-family: "Noto Serif TC", serif;
-  }
+  .notice h3 { color: #fbbf24; margin-bottom: 12px; font-size: 1rem; }
+  .notice li { color: #fde68a; font-size: 0.88rem; padding: 3px 0; }
+  .notice .contact { color: rgba(253,230,138,0.7); font-size: 0.78rem; margin-top: 16px; }
+  .notice a { color: #fde68a; }
 
-  /* Footer */
   footer {
-    padding: 48px 24px;
-    text-align: center;
-    color: var(--ink-soft); font-size: 0.82rem;
+    text-align: center; padding: 32px 24px; color: #64748b; font-size: 0.85rem;
+    border-top: 1px solid rgba(148,163,184,0.1); margin-top: 48px;
   }
-  footer .links { margin-bottom: 12px; }
-  footer a {
-    color: var(--ink-mid); text-decoration: none; margin: 0 12px;
-    letter-spacing: 0.05em;
-  }
-  footer a:hover { color: var(--ink); }
-  footer .small {
-    font-size: 0.72rem; color: var(--ink-low); letter-spacing: 0.18em;
-    text-transform: uppercase;
-  }
-
-  /* Mobile */
-  @media (max-width: 720px) {
-    nav.bar { padding: 12px 18px; gap: 16px; }
-    .nav-links { gap: 18px; }
-    .nav-links a.active::after { bottom: -16px; }
-    .hero { padding: 80px 20px 64px; }
-    .terminal { margin-top: 56px; }
-    .terminal-body { padding: 22px 20px; font-size: 0.86rem; }
-    section.block { padding: 80px 20px; }
-    .versus { grid-template-columns: 1fr; }
-    .versus-col + .versus-col { border-left: none; border-top: 1px solid var(--line); }
-    .grid-2 { grid-template-columns: 1fr; }
-    .step { gap: 18px; padding: 24px 0; }
-    .step-num { font-size: 1.6rem; min-width: 44px; }
-    .final-cta { padding: 96px 20px; }
-  }
+  footer a { color: #94a3b8; text-decoration: none; }
+  footer a:hover { color: #f1f5f9; }
 </style>
 </head>
 <body>
 
-<nav class="bar">
-  <a href="https://nplusstar.ai" class="brand"><span class="dot"></span> N+Star</a>
+<nav class="nav">
+  <a href="https://nplusstar.ai" class="nav-brand">N+Star</a>
   <div class="nav-links">
     <a href="/chat">Chat</a>
     <a href="/pro" class="active">Pro</a>
@@ -413,207 +112,77 @@
   </div>
 </nav>
 
-<!-- ============ HERO ============ -->
-<section class="hero">
-  <div class="hero-inner">
-    <span class="eyebrow">N+Claw Pro · macOS · PoC v0</span>
-    <div class="gold-rule"></div>
-    <h1 class="display">桌面工程 AI 同事<br/><em>為你還回時間</em></h1>
-    <p class="hero-quote">「唯一不可逆的是，時間。<br/>我們把它真實地還給你。」</p>
-    <p class="hero-sub">For engineers who bill by hours but burn them on lookups.</p>
-
-    <div class="cta-row">
-      <a class="btn-primary" href="/download/NClawPro-PoC-v0.dmg" download>
-        下載 macOS 版
-      </a>
-      <a class="btn-secondary" href="#install">如何安裝</a>
+<main>
+  <section class="hero">
+    <img src="/logo.png" alt="N+Star">
+    <h1>N+Claw Pro</h1>
+    <p class="tag">唯一不可逆的是，時間！真實地把它還給你</p>
+    <p class="sub">PoC v0 · 由恩加斯達國際出品</p>
+    <div class="cta">
+      <a class="btn-primary" href="/download/NClawPro-PoC-v0.dmg" download>下載 macOS 版</a>
+      <span class="meta">macOS 11.0+ · 488 KB · 免費試用</span>
     </div>
+  </section>
 
-    <p class="meta">macOS 11.0+<span class="meta-sep">·</span>488 KB<span class="meta-sep">·</span>免費試用</p>
-
-    <!-- Conversation card -->
-    <div class="terminal">
-      <div class="terminal-bar">
-        <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-        <span class="title">N+Claw Pro</span>
-      </div>
-      <div class="terminal-body">
-        <div><span class="prompt">▌</span> <span class="you">8 樓商辦廁所灑水頭間距規範？</span></div>
-        <div class="dim" style="margin: 6px 0">↓ <span class="skill">SKILL · 消防灑水</span></div>
-        <div>依《各類場所消防安全設備設置標準》第 47 條，第 1 種快速反應型一般作業場所最大間距 <strong>2.6 m</strong>，需錯開列佈置。</div>
-        <div class="dim">　└ 引用：法規條文 §47-3 / 廠商規格表 / NFPA 13 對照</div>
-        <div style="margin-top: 18px"><span class="prompt">▌</span> <span class="you">PVC vs 鍍鋅鋼管 25A 報價差多少？</span></div>
-        <div class="dim" style="margin: 6px 0">↓ <span class="skill">SKILL · 估算報價</span></div>
-        <div>PVC 25A 約 NT$ 38/m，鍍鋅鋼管 25A 約 NT$ 92/m，差 <strong>142%</strong>。含工資估價單已產生。</div>
-      </div>
+  <section class="grid">
+    <div class="card">
+      <div class="card-num">01 / SKILL</div>
+      <h3>預裝神奇技能</h3>
+      <p>不用再摸索。消防灑水管徑速查、CAD/DWG 讀取、估算報價、規範查詢、PDF 圖說解析、廠商比價、工法 SOP、設計 review。</p>
     </div>
-  </div>
-</section>
-
-<!-- ============ FEATURES ============ -->
-<section class="block tint">
-  <div class="block-inner">
-    <p class="block-eyebrow">Why N+Claw Pro</p>
-    <h2 class="block-title">不再用個人 ChatGPT<br/>假裝在做工程</h2>
-    <p class="block-sub">工程查詢需要的不是聰明，是<strong>查得到</strong>、<strong>引得出</strong>、<strong>不會猜</strong>。Pro 把這三件事預裝好。</p>
-
-    <div class="grid-4">
-      <div class="skill-card">
-        <div class="skill-num">01 / SKILL</div>
-        <h3>預裝神奇技能</h3>
-        <p>不用再摸索。消防灑水管徑速查、CAD/DWG 讀取、估算報價、規範查詢、PDF 圖說解析、廠商比價、工法 SOP、設計 review。</p>
-      </div>
-      <div class="skill-card">
-        <div class="skill-num">02 / KB</div>
-        <h3>工程專屬領域</h3>
-        <p>不會問老婆給丈母娘。每次對話自動帶入規範條文、廠商行情、工法步驟，引用可追溯。</p>
-      </div>
-      <div class="skill-card">
-        <div class="skill-num">03 / ROUTING</div>
-        <h3>智慧選模型</h3>
-        <p>省去你的荷包。Gemini / Claude / GPT / DeepSeek / Qwen 統一 API，任務自動派最便宜可用的。</p>
-      </div>
-      <div class="skill-card">
-        <div class="skill-num">04 / GUI</div>
-        <h3>零程式，桌面版</h3>
-        <p>小白也可用。雙擊 .app 開瀏覽器即用，第一次啟動自動配置。</p>
-      </div>
+    <div class="card">
+      <div class="card-num">02 / KB</div>
+      <h3>工程專屬領域</h3>
+      <p>不會問老婆給丈母娘。每次對話自動帶入規範條文、廠商行情、工法步驟，引用可追溯。</p>
     </div>
-  </div>
-</section>
-
-<!-- ============ VS ChatGPT ============ -->
-<section class="block">
-  <div class="block-inner" style="max-width: 920px;">
-    <p class="block-eyebrow">Pro vs ChatGPT</p>
-    <h2 class="block-title">同樣 NT$ 600/月<br/>差別在哪？</h2>
-    <p class="block-sub">ChatGPT 給你萬能模型；Pro 給你工程同事。差在「願不願意把上下文寫進每次對話」。</p>
-
-    <div class="versus">
-      <div class="versus-col">
-        <h4>ChatGPT Plus / 個人版</h4>
-        <h3 class="serif">萬能但要每次餵料</h3>
-        <ul>
-          <li>每次都要貼法規、貼規格表、貼廠商行情</li>
-          <li>沒上下文 → 容易亂猜不引用</li>
-          <li>無 CAD/DWG 原生支援，要先轉 PDF</li>
-          <li>沒專屬 skill，估算邏輯每次重新講</li>
-          <li>沒授權號 → 員工流動 = 帳號歸還難</li>
-        </ul>
-      </div>
-      <div class="versus-col us">
-        <h4>N+Claw Pro</h4>
-        <h3 class="serif">裝完就有工程上下文</h3>
-        <ul>
-          <li>預裝法規 + 廠商 + 工法 KB，自動帶入</li>
-          <li>每答必有引用來源（追溯到條文）</li>
-          <li>原生讀 .dwg / .pdf 圖說</li>
-          <li>8 個 skill 寫死估算 / 規範 / 報價邏輯</li>
-          <li>啟用碼制，員工換 = 重發碼，公司不掉 know-how</li>
-        </ul>
-      </div>
+    <div class="card">
+      <div class="card-num">03 / ROUTING</div>
+      <h3>智慧選模型</h3>
+      <p>省去你的荷包。Gemini / Claude / GPT / DeepSeek / Qwen 統一 API，任務自動派最便宜可用的。</p>
     </div>
-  </div>
-</section>
+    <div class="card">
+      <div class="card-num">04 / GUI</div>
+      <h3>零程式，桌面版</h3>
+      <p>小白也可用。雙擊 .app 開瀏覽器即用，第一次啟動自動配置。</p>
+    </div>
+  </section>
 
-<!-- ============ INSTALL ============ -->
-<section class="block tint" id="install">
-  <div class="block-inner">
-    <p class="block-eyebrow">Installation</p>
-    <h2 class="block-title">安裝六步，<em class="serif" style="color:var(--gold-deep);font-style:italic;">三分鐘上線</em></h2>
-    <p class="block-sub">PoC v0 沒走 Apple Notarization，第一次需要繞 Gatekeeper（步驟 4）。v1 上線後會通過正式公證，雙擊即用。</p>
-
+  <section>
+    <h2>安裝步驟</h2>
     <ol class="steps">
-      <li class="step">
-        <div class="step-num">01</div>
-        <div class="step-body">
-          <h4>下載 DMG</h4>
-          <p>點上方按鈕下載 <code>NClawPro-PoC-v0.dmg</code>（488 KB）。</p>
-        </div>
-      </li>
-      <li class="step">
-        <div class="step-num">02</div>
-        <div class="step-body">
-          <h4>雙擊掛載</h4>
-          <p>雙擊 dmg 檔開啟，會看到 N+Claw Pro 圖示。</p>
-        </div>
-      </li>
-      <li class="step">
-        <div class="step-num">03</div>
-        <div class="step-body">
-          <h4>拖到 Applications</h4>
-          <p>把 N+Claw Pro 拖到右邊的 Applications 資料夾。</p>
-        </div>
-      </li>
-      <li class="step">
-        <div class="step-num">04</div>
-        <div class="step-body">
-          <h4>繞過 Gatekeeper（首次）</h4>
-          <p>雙擊 N+Claw Pro 第一次會看到「無法打開」對話框。請進「系統設定 → 隱私與安全性」拉到最下方，點「仍要打開」並輸入密碼。如還不行，開 Terminal 貼：<br/><code>xattr -cr "/Applications/N+Claw Pro.app"</code></p>
-        </div>
-      </li>
-      <li class="step">
-        <div class="step-num">05</div>
-        <div class="step-body">
-          <h4>首次啟動</h4>
-          <p>自動安裝 OpenClaw 與配置（需要 Node.js，沒裝會引導你下載）。</p>
-        </div>
-      </li>
-      <li class="step">
-        <div class="step-num">06</div>
-        <div class="step-body">
-          <h4>開始用</h4>
-          <p>瀏覽器自動開啟 N+Claw Pro Control UI，可以開始 chat。</p>
-        </div>
-      </li>
+      <li class="step"><div class="step-num">1</div><div><h4>下載 DMG</h4><p>點上方按鈕下載 NClawPro-PoC-v0.dmg</p></div></li>
+      <li class="step"><div class="step-num">2</div><div><h4>雙擊掛載</h4><p>雙擊 dmg 檔開啟，看到 N+Claw Pro 圖示</p></div></li>
+      <li class="step"><div class="step-num">3</div><div><h4>拖到 Applications</h4><p>把 N+Claw Pro 拖到右邊的 Applications 資料夾</p></div></li>
+      <li class="step"><div class="step-num">4</div><div><h4>繞過 Gatekeeper（首次）</h4><p>雙擊 N+Claw Pro → 第一次會看到「無法打開」對話框。請進「系統設定 → 隱私與安全性」拉到最下方，點「仍要打開」並輸入密碼。再雙擊就能開了。如還不行，開啟 Terminal 貼：<code>xattr -cr "/Applications/N+Claw Pro.app"</code></p></div></li>
+      <li class="step"><div class="step-num">5</div><div><h4>首次啟動</h4><p>自動安裝 OpenClaw 與配置（需要 Node.js，沒裝會引導你下載）</p></div></li>
+      <li class="step"><div class="step-num">6</div><div><h4>開始用</h4><p>瀏覽器自動開啟 N+Claw Pro Control UI，可以開始 chat</p></div></li>
     </ol>
-  </div>
-</section>
+  </section>
 
-<!-- ============ REQ + NOTICE ============ -->
-<section class="block">
-  <div class="block-inner" style="max-width: 920px;">
-    <div class="grid-2">
-      <div class="req">
-        <h3>System Requirements</h3>
-        <ul>
-          <li>macOS 11.0+（Big Sur 以上，Apple Silicon 或 Intel）</li>
-          <li>Node.js 22+（沒裝會引導下載）</li>
-          <li>網路（首次安裝下載 OpenClaw 約 200 MB）</li>
-          <li>~200 MB 硬碟空間</li>
-        </ul>
-      </div>
+  <section class="req">
+    <h2>系統需求</h2>
+    <ul>
+      <li>• macOS 11.0+（Big Sur 以上，Apple Silicon 或 Intel）</li>
+      <li>• Node.js 22+（沒裝會引導下載）</li>
+      <li>• 網路（首次安裝下載 OpenClaw 約 200 MB）</li>
+      <li>• ~200 MB 硬碟空間</li>
+    </ul>
+  </section>
 
-      <div class="notice">
-        <h3>PoC v0 限制</h3>
-        <ul>
-          <li>內含 1 個 demo skill（消防灑水管徑），完整 8 skill 留 v1</li>
-          <li>KB 為 mock 資料示範，真實 KB RAG 留 v1 接通</li>
-          <li>.app 未經 Apple notarization，第一次需手動繞 Gatekeeper</li>
-          <li>無儲值 / 計量 / 推薦碼（v1 上線）</li>
-        </ul>
-        <p class="contact">支援聯繫 ─ <a href="mailto:support@nplusstar.ai">support@nplusstar.ai</a></p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============ FINAL CTA ============ -->
-<section class="final-cta">
-  <h2>把時間，<em>還給你自己</em></h2>
-  <p>下載 PoC v0，開始 14 天免費試用。</p>
-  <a class="btn-primary" href="/download/NClawPro-PoC-v0.dmg" download>立即下載 macOS 版</a>
-</section>
+  <section class="notice">
+    <h3>PoC v0 限制</h3>
+    <ul>
+      <li>• 內含 1 個 demo skill（消防灑水管徑），完整 8 skill 留 v1</li>
+      <li>• KB 為 mock 資料示範，真實 KB RAG 留 v1 接通</li>
+      <li>• .app 未經 Apple notarization，第一次需手動繞 Gatekeeper</li>
+      <li>• 無儲值 / 計量 / 推薦碼（v1 上線）</li>
+    </ul>
+    <p class="contact">支援聯繫：<a href="mailto:support@nplusstar.ai">support@nplusstar.ai</a> · N+Claw by 恩加斯達國際</p>
+  </section>
+</main>
 
 <footer>
-  <div class="links">
-    <a href="https://nplusstar.ai">N+Star</a> ·
-    <a href="/chat">Chat</a> ·
-    <a href="/bot">Bot</a> ·
-    <a href="/">Developer</a> ·
-    <a href="mailto:support@nplusstar.ai">Support</a>
-  </div>
-  <div class="small">© 2026 恩加斯達國際有限公司</div>
+  <p>© 2026 恩加斯達國際 · <a href="https://nplusstar.ai">nplusstar.ai</a> · <a href="mailto:support@nplusstar.ai">support@nplusstar.ai</a></p>
 </footer>
 
 </body>
