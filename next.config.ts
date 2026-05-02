@@ -8,19 +8,36 @@ const nextConfig: NextConfig = {
         source: "/v1/:path*",
         destination: "/api/v1/:path*",
       },
+      // serve static product pages at clean URLs
+      { source: "/pro", destination: "/pro/index.html" },
+      { source: "/bot", destination: "/bot/index.html" },
     ];
   },
   async redirects() {
     return [
-      // /pro moved to brand main site
+      // api.nplusstar.ai is API endpoint only — non-API routes redirect to nclaw.nplusstar.ai
       {
         source: "/pro",
-        destination: "https://nplusstar.ai/pro",
+        has: [{ type: "host", value: "api.nplusstar.ai" }],
+        destination: "https://nclaw.nplusstar.ai/pro",
+        permanent: true,
+      },
+      {
+        source: "/bot",
+        has: [{ type: "host", value: "api.nplusstar.ai" }],
+        destination: "https://nclaw.nplusstar.ai/bot",
+        permanent: true,
+      },
+      {
+        source: "/chat",
+        has: [{ type: "host", value: "api.nplusstar.ai" }],
+        destination: "https://nclaw.nplusstar.ai/chat",
         permanent: true,
       },
       {
         source: "/download/:path*",
-        destination: "https://nplusstar.ai/download/:path*",
+        has: [{ type: "host", value: "api.nplusstar.ai" }],
+        destination: "https://nclaw.nplusstar.ai/download/:path*",
         permanent: true,
       },
     ];

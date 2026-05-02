@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>N+Claw Bot — 工程公司沒 IT 也能用的 AI 助手</title>
+<meta name="description" content="公司沒 IT 部門、不會建系統、員工流動高？開 Telegram，打字就有 AI 幫你查規範、寫文件、看圖。一個公司啟用碼，員工自己加 bot。">
+<meta property="og:title" content="N+Claw Bot — 公司沒 IT 也能用的 AI 助手">
+<meta property="og:description" content="開 Telegram 打字就行。工程公司專用，14 個內建技能。">
+<meta property="og:image" content="https://nplusstar.ai/og-image.png">
+<meta property="og:url" content="https://nplusstar.ai/bot">
+<link rel="icon" href="/favicon.ico" sizes="32x32">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "Helvetica Neue", "PingFang TC", sans-serif;
+    background: linear-gradient(180deg, #020617 0%, #0f172a 50%, #020617 100%);
+    color: #f1f5f9;
+    min-height: 100vh;
+    line-height: 1.7;
+  }
+  .nav {
+    padding: 16px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid rgba(148,163,184,0.1);
+  }
+  .nav-brand { font-weight: 700; color: #f1f5f9; font-size: 1rem; text-decoration: none; }
+  .nav-links a { color: #94a3b8; text-decoration: none; font-size: 0.9rem; margin-left: 16px; }
+  .nav-links a:hover { color: #f1f5f9; }
+  .nav-links a.active { color: #fbbf24; border-bottom: 1px solid #fbbf24; padding-bottom: 2px; }
+  main { max-width: 880px; margin: 0 auto; padding: 56px 24px; }
+
+  .hero { text-align: center; margin-bottom: 80px; }
+  .hero h1 {
+    font-size: 3rem; margin-bottom: 16px; letter-spacing: -1px;
+    background: linear-gradient(135deg, #f1f5f9, #94a3b8);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .hero .punch {
+    font-size: 1.4rem; color: #cbd5e1; margin-bottom: 8px; font-weight: 500;
+  }
+  .hero .sub { font-size: 1rem; color: #94a3b8; margin-bottom: 32px; max-width: 500px; margin-left: auto; margin-right: auto; }
+
+  .cta-row { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+  .cta {
+    display: inline-block; background: #2563eb; color: #fff;
+    padding: 14px 32px; border-radius: 12px; font-weight: 700;
+    text-decoration: none; transition: all 0.2s;
+    box-shadow: 0 8px 24px rgba(37,99,235,0.25);
+  }
+  .cta:hover { background: #1d4ed8; transform: translateY(-1px); }
+  .cta-secondary {
+    display: inline-block; padding: 14px 28px;
+    background: rgba(255,255,255,0.05);
+    color: #cbd5e1; border-radius: 12px;
+    border: 1px solid rgba(148,163,184,0.2);
+    text-decoration: none; font-weight: 600;
+  }
+  .cta-secondary:hover { background: rgba(255,255,255,0.1); }
+
+  h2 {
+    font-size: 1.5rem; text-align: center; margin-bottom: 12px; letter-spacing: -0.3px;
+  }
+  .h2-sub {
+    text-align: center; color: #94a3b8; font-size: 0.95rem; margin-bottom: 36px;
+  }
+
+  /* Pain section */
+  .pain-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 80px; }
+  .pain-card {
+    background: rgba(15,23,42,0.5); border: 1px solid rgba(148,163,184,0.15);
+    border-radius: 16px; padding: 28px;
+  }
+  .pain-card .quote {
+    font-size: 0.95rem; color: #f1f5f9; font-weight: 500; margin-bottom: 12px;
+    font-style: italic; padding-left: 12px;
+    border-left: 3px solid rgba(148,163,184,0.3);
+  }
+  .pain-card .answer {
+    color: #94a3b8; font-size: 0.92rem;
+  }
+  .pain-card .answer strong { color: #cbd5e1; }
+
+  /* Steps */
+  .steps {
+    max-width: 600px; margin: 0 auto 80px;
+    display: flex; flex-direction: column; gap: 16px;
+  }
+  .step {
+    background: rgba(15,23,42,0.4); border: 1px solid rgba(148,163,184,0.12);
+    border-radius: 12px; padding: 20px; display: flex; gap: 18px;
+  }
+  .step-num {
+    flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%;
+    background: #2563eb; color: #fff; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .step h4 { margin-bottom: 6px; font-size: 1rem; color: #f1f5f9; }
+  .step p { font-size: 0.9rem; color: #94a3b8; }
+  code { background: rgba(255,255,255,0.08); padding: 1px 6px; border-radius: 4px; font-family: SF Mono, Menlo, monospace; font-size: 0.88em; color: #93c5fd; }
+
+  /* Skills */
+  .skills-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 12px; margin-bottom: 80px;
+  }
+  .skill {
+    background: rgba(15,23,42,0.4); border: 1px solid rgba(148,163,184,0.12);
+    border-radius: 12px; padding: 18px;
+  }
+  .skill-title { font-weight: 700; color: #f1f5f9; font-size: 0.95rem; margin-bottom: 6px; }
+  .skill-desc { color: #94a3b8; font-size: 0.85rem; }
+
+  /* Pricing */
+  .pricing-card {
+    background: rgba(15,23,42,0.5); border: 1px solid rgba(148,163,184,0.15);
+    border-radius: 16px; padding: 28px; margin-bottom: 16px;
+  }
+  .pricing-card h3 { font-size: 1.15rem; margin-bottom: 8px; color: #f1f5f9; }
+  .pricing-card .why { color: #94a3b8; font-size: 0.92rem; margin-bottom: 16px; }
+  .pricing-card .num {
+    font-size: 1.8rem; font-weight: 700; color: #38bdf8; margin-bottom: 4px;
+  }
+  .pricing-card .num small { font-size: 0.9rem; color: #94a3b8; font-weight: 400; }
+  .pricing-list { list-style: none; }
+  .pricing-list li {
+    padding: 8px 0; color: #cbd5e1; font-size: 0.9rem;
+    border-bottom: 1px solid rgba(148,163,184,0.08);
+  }
+  .pricing-list li:last-child { border-bottom: none; }
+
+  /* Compare table */
+  .compare {
+    background: rgba(15,23,42,0.4); border: 1px solid rgba(148,163,184,0.12);
+    border-radius: 16px; padding: 24px; margin-bottom: 80px;
+    overflow-x: auto;
+  }
+  .compare table { width: 100%; border-collapse: collapse; min-width: 480px; }
+  .compare th, .compare td {
+    padding: 12px 14px; text-align: left;
+    border-bottom: 1px solid rgba(148,163,184,0.1);
+    font-size: 0.92rem;
+  }
+  .compare th { color: #94a3b8; font-weight: 600; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.5px; }
+  .compare td { color: #cbd5e1; }
+  .compare tr td:first-child { color: #f1f5f9; font-weight: 600; }
+  .yes { color: #22c55e; }
+  .no { color: #64748b; }
+
+  .contact-box {
+    background: linear-gradient(135deg, rgba(56,189,248,0.1), rgba(37,99,235,0.1));
+    border: 1px solid rgba(56,189,248,0.25);
+    border-radius: 16px; padding: 36px;
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .contact-box h3 { color: #38bdf8; margin-bottom: 8px; font-size: 1.3rem; }
+  .contact-box .sub { color: #cbd5e1; font-size: 0.95rem; margin-bottom: 24px; }
+  .contact-box a {
+    display: inline-block;
+    color: #fff; text-decoration: none;
+    background: #2563eb;
+    padding: 14px 32px; border-radius: 12px;
+    font-weight: 700; font-size: 0.95rem;
+  }
+  .contact-box a:hover { background: #1d4ed8; }
+
+  .crossnav { text-align: center; color: #64748b; font-size: 0.9rem; line-height: 1.8; }
+  .crossnav a { color: #94a3b8; text-decoration: none; }
+  .crossnav a:hover { color: #f1f5f9; }
+
+  footer {
+    text-align: center; padding: 32px 24px; color: #64748b; font-size: 0.85rem;
+    border-top: 1px solid rgba(148,163,184,0.1); margin-top: 56px;
+  }
+  footer a { color: #94a3b8; text-decoration: none; }
+  footer a:hover { color: #f1f5f9; }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="https://nplusstar.ai" class="nav-brand">N+Star</a>
+  <div class="nav-links">
+    <a href="/chat">Chat</a>
+    <a href="/pro">Pro</a>
+    <a href="/bot" class="active">Bot</a>
+    <a href="/">Developer</a>
+  </div>
+</nav>
+
+<main>
+  <section class="hero">
+    <h1>不用建系統，<br>打字就能用的 AI 助手</h1>
+    <p class="punch">給沒 IT 部門的工程公司</p>
+    <p class="sub">員工開 Telegram、輸入啟用碼，就能直接問規範、查廠商、寫報告、看圖。一張合約、一個碼、全公司用。</p>
+    <div class="cta-row">
+      <a class="cta" href="mailto:support@nplusstar.ai?subject=N%2BClaw%20Bot%20公司導入詢問">公司導入詢問</a>
+      <a class="cta-secondary" href="https://t.me/NClaw_Li_Bot">已有啟用碼？開 Telegram</a>
+    </div>
+  </section>
+
+  <section>
+    <h2>你公司是不是這樣</h2>
+    <p class="h2-sub">三個常見痛點</p>
+    <div class="pain-grid">
+      <div class="pain-card">
+        <div class="quote">「員工問能不能用 AI，但我們連電腦都靠外包。」</div>
+        <div class="answer">不用建任何東西。員工本來就在用的 Telegram 加我們 bot 就好。<strong>三分鐘上線。</strong></div>
+      </div>
+      <div class="pain-card">
+        <div class="quote">「老闆怕花幾十萬建系統最後沒人用。」</div>
+        <div class="answer">月費合約，最低 NT$ 5,000 起。試三個月看員工到底會不會用，不續約沒違約金。<strong>用多少付多少。</strong></div>
+      </div>
+      <div class="pain-card">
+        <div class="quote">「員工流動快，新人來了又要重新弄帳號。」</div>
+        <div class="answer">公司一張合約一個啟用碼，員工自己掃 bot 啟用。離職就回收啟用碼。<strong>HR 不必管帳號。</strong></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>一個碼，全公司用</h2>
+    <p class="h2-sub">啟用流程</p>
+    <ol class="steps">
+      <li class="step">
+        <div class="step-num">1</div>
+        <div>
+          <h4>公司簽合約，拿到啟用碼</h4>
+          <p>合約簽完當天我們發給管理者一組啟用碼，例如 <code>LEXIN-2026</code>。</p>
+        </div>
+      </li>
+      <li class="step">
+        <div class="step-num">2</div>
+        <div>
+          <h4>員工開 Telegram 加 <code>@NClaw_Li_Bot</code></h4>
+          <p>員工本來就在用 Telegram。如果沒有，App Store 兩分鐘下載。</p>
+        </div>
+      </li>
+      <li class="step">
+        <div class="step-num">3</div>
+        <div>
+          <h4>輸入 <code>/activate 啟用碼</code> 開始用</h4>
+          <p>啟用後直接打字、傳照片、傳 PDF。每位員工的對話獨立，公司資料不外洩到別家。</p>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>能幫員工做什麼</h2>
+    <p class="h2-sub">14 個內建技能，工程業日常都涵蓋</p>
+    <div class="skills-grid">
+      <div class="skill"><div class="skill-title">查工程規範</div><div class="skill-desc">問「消防灑水管徑怎麼選」直接給條文</div></div>
+      <div class="skill"><div class="skill-title">讀 PDF 文件</div><div class="skill-desc">業主規範、廠商型錄、合約丟進去自動摘要</div></div>
+      <div class="skill"><div class="skill-title">看現場照片</div><div class="skill-desc">工地照片傳進來辨識設備、判斷狀況</div></div>
+      <div class="skill"><div class="skill-title">產出 Word/Excel/PDF</div><div class="skill-desc">一句話「幫我做進度報告」直接出檔</div></div>
+      <div class="skill"><div class="skill-title">大樣圖搜尋</div><div class="skill-desc">內建工程大樣圖庫，輸入關鍵字直接給</div></div>
+      <div class="skill"><div class="skill-title">出工程圖表</div><div class="skill-desc">數據變圖表，貼進報告就能用</div></div>
+      <div class="skill"><div class="skill-title">看公司用量</div><div class="skill-desc">每月用了多少、誰用最多，主管掌握</div></div>
+      <div class="skill"><div class="skill-title">整合 Google Drive</div><div class="skill-desc">公司雲端檔案直接找、直接存</div></div>
+      <div class="skill"><div class="skill-title">即時搜尋網路</div><div class="skill-desc">查最新法規修訂、市場行情、廠商資訊</div></div>
+      <div class="skill"><div class="skill-title">讀網頁文章</div><div class="skill-desc">貼網址直接抓內容摘要</div></div>
+      <div class="skill"><div class="skill-title">寫工程報告</div><div class="skill-desc">巡檢、進度、品質報告自動產生</div></div>
+      <div class="skill"><div class="skill-title">新人引導</div><div class="skill-desc">員工剛加入時 bot 主動問需求</div></div>
+      <div class="skill"><div class="skill-title">追蹤誰在用</div><div class="skill-desc">看哪些員工常用、哪些沒用</div></div>
+      <div class="skill"><div class="skill-title">透明計費</div><div class="skill-desc">用量帳單清楚，不會收冤枉錢</div></div>
+    </div>
+  </section>
+
+  <section style="margin-bottom: 80px;">
+    <h2>多少錢</h2>
+    <p class="h2-sub">月費合約，按公司規模選</p>
+    <div class="pricing-card">
+      <h3>Starter</h3>
+      <div class="num">NT$ 5,000<small> / 月</small></div>
+      <p class="why">5 名員工、適合小型工程公司（5-15 人規模）。試三個月看效果。</p>
+      <ul class="pricing-list">
+        <li>5 個員工帳號</li>
+        <li>14 個內建技能全開</li>
+        <li>用量 dashboard</li>
+        <li>每月 30 萬字對話額度</li>
+      </ul>
+    </div>
+    <div class="pricing-card">
+      <h3>Pro</h3>
+      <div class="num">NT$ 15,000<small> / 月</small></div>
+      <p class="why">20 名員工、中型工程顧問或設計事務所（20-50 人規模）最常選。</p>
+      <ul class="pricing-list">
+        <li>20 個員工帳號</li>
+        <li>所有 Starter 功能</li>
+        <li>每月 150 萬字對話額度</li>
+        <li>客製公司內部 KB 整合</li>
+        <li>專屬 Slack / Telegram 支援群</li>
+      </ul>
+    </div>
+    <div class="pricing-card">
+      <h3>Enterprise</h3>
+      <div class="num">客製<small> / 月</small></div>
+      <p class="why">50 人以上的大型 EPC、營造商、總顧問。可整合 ERP、報價系統。</p>
+      <ul class="pricing-list">
+        <li>不限員工帳號</li>
+        <li>不限對話額度</li>
+        <li>客製 skill 開發</li>
+        <li>內部部署選項（不走公開雲）</li>
+        <li>SLA 保證 + 專屬窗口</li>
+      </ul>
+    </div>
+    <p style="text-align: center; color: #94a3b8; font-size: 0.88rem; margin-top: 16px;">
+      年費 = 月費 × 10（17% 折扣）+ 送一次到府教育訓練 + 客製 KB 整合
+    </p>
+  </section>
+
+  <section style="margin-bottom: 80px;">
+    <h2>為什麼不選 ChatGPT 公司版？</h2>
+    <p class="h2-sub">三個關鍵差別</p>
+    <div class="compare">
+      <table>
+        <tr>
+          <th>項目</th>
+          <th>ChatGPT 公司版</th>
+          <th>N+Claw Bot</th>
+        </tr>
+        <tr>
+          <td>工程業專屬</td>
+          <td class="no">通用</td>
+          <td class="yes">MEP / 土建 / 消防內建</td>
+        </tr>
+        <tr>
+          <td>引用台灣規範</td>
+          <td class="no">不一定有</td>
+          <td class="yes">內建《設備設置標準》《建築技術規則》</td>
+        </tr>
+        <tr>
+          <td>員工綁定方式</td>
+          <td>每個員工各別申請</td>
+          <td class="yes">一張合約一個碼</td>
+        </tr>
+        <tr>
+          <td>用 Telegram 介面</td>
+          <td class="no">要學新介面</td>
+          <td class="yes">員工本來就在用</td>
+        </tr>
+        <tr>
+          <td>客製公司 KB</td>
+          <td>需另外付費</td>
+          <td class="yes">Pro 方案內建</td>
+        </tr>
+        <tr>
+          <td>起跳價（5 員工）</td>
+          <td>約 NT$ 5,000+</td>
+          <td>NT$ 5,000</td>
+        </tr>
+      </table>
+    </div>
+  </section>
+
+  <div class="contact-box">
+    <h3>跟我們聊聊</h3>
+    <p class="sub">寫信告訴我們公司名、員工數、主要業務。一個工作日內回覆，不用怕被推銷。</p>
+    <a href="mailto:support@nplusstar.ai?subject=N%2BClaw%20Bot%20公司導入詢問&body=公司名稱：%0A員工數：%0A主要業務：%0A想用場景：%0A聯絡人：">寫信給我們</a>
+  </div>
+
+  <p class="crossnav">
+    或者：你是個人工程師，不會 code 也想用？看 <a href="/pro">N+Claw Pro 個人版</a><br>
+    開發者，想自己接 API 寫 Agent？看 <a href="/api">N+Claw API</a>
+  </p>
+</main>
+
+<footer>
+  <p>© 2026 恩加斯達國際 · <a href="https://nplusstar.ai">nplusstar.ai</a> · <a href="mailto:support@nplusstar.ai">support@nplusstar.ai</a></p>
+</footer>
+
+</body>
+</html>

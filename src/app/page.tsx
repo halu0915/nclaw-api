@@ -139,8 +139,8 @@ export default function Home() {
 
           <nav className="hidden md:flex items-center gap-6 text-sm">
             <a href="/chat" className="text-gray-400 hover:text-white transition-colors">Chat</a>
-            <a href="https://nplusstar.ai/pro" className="text-gray-400 hover:text-white transition-colors">Pro</a>
-            <a href="https://nplusstar.ai/bot" className="text-gray-400 hover:text-white transition-colors">Bot</a>
+            <a href="/pro" className="text-gray-400 hover:text-white transition-colors">Pro</a>
+            <a href="/bot" className="text-gray-400 hover:text-white transition-colors">Bot</a>
             <a href="/" className="text-white font-medium border-b border-amber-400 pb-0.5">Developer</a>
           </nav>
 
@@ -162,9 +162,9 @@ export default function Home() {
 
         <nav className="md:hidden flex items-center justify-around border-t border-white/5 py-2 text-sm">
           <a href="/chat" className="text-gray-400 px-3 py-1">Chat</a>
-          <a href="https://nplusstar.ai/pro" className="text-gray-400 px-3 py-1">Pro</a>
-          <a href="https://nplusstar.ai/bot" className="text-gray-400 px-3 py-1">Bot</a>
-          <a href="/" className="text-white font-medium px-3 py-1 border-b border-blue-400">Developer</a>
+          <a href="/pro" className="text-gray-400 px-3 py-1">Pro</a>
+          <a href="/bot" className="text-gray-400 px-3 py-1">Bot</a>
+          <a href="/" className="text-white font-medium px-3 py-1 border-b border-amber-400">Developer</a>
         </nav>
       </header>
 
