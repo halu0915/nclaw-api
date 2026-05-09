@@ -48,3 +48,4 @@ next-env.d.ts
 
 # runtime data files (contain secrets / state — should never be in git)
 /data/*.json
+public/download/NClawPro-v1-arm64.dmg
