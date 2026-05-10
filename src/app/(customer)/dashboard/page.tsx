@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useCustomer } from "../layout";
 import StatCard from "@/components/StatCard";
+import { formatDateTime } from "@/lib/format-date";
 import {
   AreaChart,
   Area,
@@ -75,7 +76,7 @@ export default function DashboardPage() {
   const [recentCalls, setRecentCalls] = useState<UsageRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (signal?: AbortSignal) => {
     if (!customer) return;
     setLoading(true);
 
@@ -91,15 +92,20 @@ export default function DashboardPage() {
 
     const [billingRes, usageRes, recentRes] = await Promise.allSettled([
       fetch(
-        `/api/customer/billing-summary?year=${year}&month=${month}&tenantId=${customer.tenantId}`
+        `/api/customer/billing-summary?year=${year}&month=${month}&tenantId=${customer.tenantId}`,
+        { signal }
       ),
       fetch(
-        `/api/customer/usage?tenantId=${customer.tenantId}&startDate=${startDate}&endDate=${endDate}`
+        `/api/customer/usage?tenantId=${customer.tenantId}&startDate=${startDate}&endDate=${endDate}`,
+        { signal }
       ),
       fetch(
-        `/api/customer/usage?tenantId=${customer.tenantId}&limit=10`
+        `/api/customer/usage?tenantId=${customer.tenantId}&limit=10`,
+        { signal }
       ),
     ]);
+
+    if (signal?.aborted) return;
 
     // Billing
     if (billingRes.status === "fulfilled" && billingRes.value.ok) {
@@ -166,7 +172,9 @@ export default function DashboardPage() {
   }, [customer]);
 
   useEffect(() => {
-    fetchData();
+    const ac = new AbortController();
+    fetchData(ac.signal);
+    return () => ac.abort();
   }, [fetchData]);
 
   if (!customer) return null;
@@ -358,12 +366,7 @@ export default function DashboardPage() {
                 {recentCalls.map((call) => (
                   <tr key={call.id} className="text-gray-300">
                     <td className="py-3 text-gray-400">
-                      {new Date(call.timestamp).toLocaleString("zh-TW", {
-                        month: "2-digit",
-                        day: "2-digit",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                      {formatDateTime(call.timestamp)}
                     </td>
                     <td className="py-3">
                       <span className="bg-gray-800 text-gray-300 text-xs px-2 py-0.5 rounded-md">

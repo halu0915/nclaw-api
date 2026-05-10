@@ -52,14 +52,22 @@ export default function BillingPage() {
   useEffect(() => {
     if (!customer) return;
     setLoading(true);
-    fetch(`/api/customer/billing-summary?tenantId=${customer.tenantId}&year=${selectedMonth.year}&month=${selectedMonth.month}`)
+    const ac = new AbortController();
+    fetch(`/api/customer/billing-summary?tenantId=${customer.tenantId}&year=${selectedMonth.year}&month=${selectedMonth.month}`, { signal: ac.signal })
       .then((r) => r.json())
       .then((data) => {
+        if (ac.signal.aborted) return;
         const s = data.summary || data;
         setSummary(s.totalRequests !== undefined ? s : null);
       })
-      .catch(() => setSummary(null))
-      .finally(() => setLoading(false));
+      .catch((err) => {
+        if (err?.name === "AbortError") return;
+        setSummary(null);
+      })
+      .finally(() => {
+        if (!ac.signal.aborted) setLoading(false);
+      });
+    return () => ac.abort();
   }, [customer, selectedMonth]);
 
   if (!customer) return null;

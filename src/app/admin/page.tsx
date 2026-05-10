@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { formatDate } from "@/lib/format-date";
 
 interface Customer {
   id: string;
@@ -255,7 +256,7 @@ export default function AdminPage() {
                           {c.tokenQuota.toLocaleString()}
                         </td>
                         <td className="px-4 py-3 text-gray-400">
-                          {new Date(c.createdAt).toLocaleDateString("zh-TW")}
+                          {formatDate(c.createdAt)}
                         </td>
                       </tr>
                     ))}
@@ -327,7 +328,7 @@ export default function AdminPage() {
                           </span>
                         </td>
                         <td className="px-4 py-3 text-gray-400">
-                          {new Date(k.createdAt).toLocaleDateString("zh-TW")}
+                          {formatDate(k.createdAt)}
                         </td>
                         <td className="px-4 py-3">
                           {k.enabled && (

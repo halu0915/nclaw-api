@@ -44,10 +44,15 @@ export default function ChatPage() {
   }, [messages]);
 
   useEffect(() => {
-    fetch("/api/customer/me")
+    const ac = new AbortController();
+    fetch("/api/customer/me", { signal: ac.signal })
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => d && setMe({ email: d.customer.email, companyName: d.customer.companyName }))
+      .then((d) => {
+        if (ac.signal.aborted) return;
+        if (d) setMe({ email: d.customer.email, companyName: d.customer.companyName });
+      })
       .catch(() => {});
+    return () => ac.abort();
   }, []);
 
   const logout = async () => {

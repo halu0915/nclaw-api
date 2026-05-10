@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useCustomer } from "../../layout";
 import Modal from "@/components/Modal";
+import { formatDate } from "@/lib/format-date";
 
 interface ApiKeyRow {
   id: string;
@@ -290,7 +291,7 @@ export default function KeysPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-gray-400">
-                      {new Date(key.createdAt).toLocaleDateString("zh-TW")}
+                      {formatDate(key.createdAt)}
                     </td>
                     <td className="px-4 py-3">
                       <button

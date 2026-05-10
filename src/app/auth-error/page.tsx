@@ -12,38 +12,44 @@ function ErrorContent() {
 
   // Auto-retry once on Configuration error
   useEffect(() => {
-    if (error === "Configuration" && !retried) {
-      setRetried(true);
-      setRetrying(true);
-      // Wait 1 second then retry Google login
-      setTimeout(async () => {
-        try {
-          const csrfRes = await fetch("/api/auth/csrf");
-          const { csrfToken } = await csrfRes.json();
+    if (error !== "Configuration" || retried) return;
+    setRetried(true);
+    setRetrying(true);
+    const ac = new AbortController();
+    // Wait 1 second then retry Google login
+    const timer = setTimeout(async () => {
+      try {
+        const csrfRes = await fetch("/api/auth/csrf", { signal: ac.signal });
+        const { csrfToken } = await csrfRes.json();
+        if (ac.signal.aborted) return;
 
-          const form = document.createElement("form");
-          form.method = "POST";
-          form.action = "/api/auth/signin/google";
+        const form = document.createElement("form");
+        form.method = "POST";
+        form.action = "/api/auth/signin/google";
 
-          const csrfInput = document.createElement("input");
-          csrfInput.type = "hidden";
-          csrfInput.name = "csrfToken";
-          csrfInput.value = csrfToken;
-          form.appendChild(csrfInput);
+        const csrfInput = document.createElement("input");
+        csrfInput.type = "hidden";
+        csrfInput.name = "csrfToken";
+        csrfInput.value = csrfToken;
+        form.appendChild(csrfInput);
 
-          const callbackInput = document.createElement("input");
-          callbackInput.type = "hidden";
-          callbackInput.name = "callbackUrl";
-          callbackInput.value = "/dashboard";
-          form.appendChild(callbackInput);
+        const callbackInput = document.createElement("input");
+        callbackInput.type = "hidden";
+        callbackInput.name = "callbackUrl";
+        callbackInput.value = "/dashboard";
+        form.appendChild(callbackInput);
 
-          document.body.appendChild(form);
-          form.submit();
-        } catch {
-          setRetrying(false);
-        }
-      }, 1000);
-    }
+        document.body.appendChild(form);
+        form.submit();
+      } catch (e) {
+        if ((e as Error)?.name === "AbortError") return;
+        setRetrying(false);
+      }
+    }, 1000);
+    return () => {
+      clearTimeout(timer);
+      ac.abort();
+    };
   }, [error, retried]);
 
   if (retrying) {

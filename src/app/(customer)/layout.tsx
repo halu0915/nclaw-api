@@ -36,22 +36,26 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
       setLoading(false);
       return;
     }
-    fetch("/api/customer/me")
+    const ac = new AbortController();
+    fetch("/api/customer/me", { signal: ac.signal })
       .then((res) => {
         if (!res.ok) throw new Error("未登入");
         return res.json();
       })
       .then((data) => {
+        if (ac.signal.aborted) return;
         const c = data.customer;
         setCustomer({
           ...c,
           tenantId: c.tenantId || "a0000000-0000-4000-8000-000000000001",
         });
       })
-      .catch(async () => {
+      .catch(async (err) => {
+        if (err?.name === "AbortError") return;
         try {
-          const sessionRes = await fetch("/api/auth/session");
+          const sessionRes = await fetch("/api/auth/session", { signal: ac.signal });
           const session = await sessionRes.json();
+          if (ac.signal.aborted) return;
           if (session?.user?.email) {
             setCustomer({
               id: "google-user",
@@ -67,10 +71,15 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
             });
             return;
           }
-        } catch {}
+        } catch (e) {
+          if ((e as Error)?.name === "AbortError") return;
+        }
         router.push("/login");
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (!ac.signal.aborted) setLoading(false);
+      });
+    return () => ac.abort();
   }, [router, isPublicPage]);
 
   const logout = async () => {

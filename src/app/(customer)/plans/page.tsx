@@ -23,15 +23,19 @@ export default function PlansPage() {
   const [loading, setLoading] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/customer/me")
+    const ac = new AbortController();
+    fetch("/api/customer/me", { signal: ac.signal })
       .then((res) => res.ok ? res.json() : null)
       .then(async (data) => {
+        if (ac.signal.aborted) return;
         if (data) { setCurrentPlan(data.customer.plan); return; }
         // Fallback: check next-auth session
-        const s = await fetch("/api/auth/session").then(r => r.json()).catch(() => null);
+        const s = await fetch("/api/auth/session", { signal: ac.signal }).then(r => r.json()).catch(() => null);
+        if (ac.signal.aborted) return;
         if (s?.user) setCurrentPlan("free");
       })
       .catch(() => {});
+    return () => ac.abort();
   }, []);
 
   const subscribe = async (planId: string) => {

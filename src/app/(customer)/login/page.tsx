@@ -35,10 +35,15 @@ export default function LoginPage() {
 
   // Check if already logged in
   useEffect(() => {
-    fetch("/api/auth/session")
+    const ac = new AbortController();
+    fetch("/api/auth/session", { signal: ac.signal })
       .then((r) => r.json())
-      .then((s) => { if (s?.user) goNext(); })
+      .then((s) => {
+        if (ac.signal.aborted) return;
+        if (s?.user) goNext();
+      })
       .catch(() => {});
+    return () => ac.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useCustomer } from "../../layout";
 import Modal from "@/components/Modal";
+import { formatDate } from "@/lib/format-date";
 
 interface Department {
   id: string;
@@ -318,7 +319,7 @@ export default function DepartmentsPage() {
                     )}
 
                     <div className="text-xs text-gray-600 mt-3">
-                      建立於 {new Date(dept.createdAt).toLocaleDateString("zh-TW")}
+                      建立於 {formatDate(dept.createdAt)}
                     </div>
                   </div>
                 )}

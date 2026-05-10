@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useCustomer } from "../../layout";
 import StatCard from "@/components/StatCard";
+import { formatDateTimeSec } from "@/lib/format-date";
 import {
   BarChart,
   Bar,
@@ -125,16 +126,18 @@ export default function UsagePage() {
   const [modelStats, setModelStats] = useState<ModelStat[]>([]);
   const [dailyTrend, setDailyTrend] = useState<DailyTrend[]>([]);
 
-  const fetchUsage = useCallback(async () => {
+  const fetchUsage = useCallback(async (signal?: AbortSignal) => {
     if (!customer) return;
     setLoading(true);
 
     try {
       const res = await fetch(
-        `/api/customer/usage?tenantId=${customer.tenantId}&startDate=${startDate}&endDate=${endDate}`
+        `/api/customer/usage?tenantId=${customer.tenantId}&startDate=${startDate}&endDate=${endDate}`,
+        { signal }
       );
       if (!res.ok) throw new Error("Failed to fetch usage");
       const data = await res.json();
+      if (signal?.aborted) return;
       const usageRecords: UsageRecord[] = data.records || data.usage || [];
 
       setRecords(usageRecords);
@@ -194,7 +197,8 @@ export default function UsagePage() {
         tokens,
       }));
       setDailyTrend(trend);
-    } catch {
+    } catch (err) {
+      if ((err as Error)?.name === "AbortError") return;
       setRecords([]);
       setTotalRequests(0);
       setTotalTokens(0);
@@ -208,7 +212,9 @@ export default function UsagePage() {
   }, [customer, startDate, endDate]);
 
   useEffect(() => {
-    fetchUsage();
+    const ac = new AbortController();
+    fetchUsage(ac.signal);
+    return () => ac.abort();
   }, [fetchUsage]);
 
   if (!customer) return null;
@@ -447,13 +453,7 @@ export default function UsagePage() {
                       }
                     >
                       <td className="py-3 text-gray-400 whitespace-nowrap">
-                        {new Date(r.timestamp).toLocaleString("zh-TW", {
-                          month: "2-digit",
-                          day: "2-digit",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          second: "2-digit",
-                        })}
+                        {formatDateTimeSec(r.timestamp)}
                       </td>
                       <td className="py-3">
                         <span className="bg-gray-800 text-gray-300 text-xs px-2 py-0.5 rounded-md">
