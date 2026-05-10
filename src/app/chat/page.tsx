@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Link from "next/link";
 
 interface Message {
   role: "user" | "assistant";
@@ -111,12 +112,12 @@ export default function ChatPage() {
       {/* Header */}
       <header className="border-b border-gray-800 shrink-0">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-          <a href="/" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2">
             <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-xs">
               N+
             </div>
             <span className="font-semibold">N+Claw Chat</span>
-          </a>
+          </Link>
           <div className="flex items-center gap-2">
             <div className="relative">
               <button
@@ -162,8 +163,8 @@ export default function ChatPage() {
                       <div className="text-sm text-white truncate">{me.email}</div>
                       {me.companyName && <div className="text-xs text-gray-400 truncate">{me.companyName}</div>}
                     </div>
-                    <a href="/dashboard" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-800">後台 Dashboard</a>
-                    <a href="/billing" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-800">帳務 / 用量</a>
+                    <Link href="/dashboard" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-800">後台 Dashboard</Link>
+                    <Link href="/billing" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-800">帳務 / 用量</Link>
                     <button
                       onClick={logout}
                       className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-800 border-t border-gray-800"
@@ -174,12 +175,12 @@ export default function ChatPage() {
                 )}
               </div>
             ) : (
-              <a
+              <Link
                 href="/login"
                 className="px-3 py-1.5 rounded-lg text-sm text-gray-300 border border-gray-700 hover:border-gray-500 transition-colors"
               >
                 登入
-              </a>
+              </Link>
             )}
           </div>
         </div>

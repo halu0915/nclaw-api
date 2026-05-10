@@ -2,6 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
+import Link from "next/link";
 
 function ErrorContent() {
   const searchParams = useSearchParams();
@@ -61,9 +62,9 @@ function ErrorContent() {
       <div className="max-w-md text-center">
         <h1 className="text-2xl font-bold mb-4 text-red-400">登入錯誤</h1>
         <p className="text-gray-400 mb-6">請重試一次</p>
-        <a href="/login" className="px-6 py-3 bg-blue-600 rounded-lg text-sm inline-block">
+        <Link href="/login" className="px-6 py-3 bg-blue-600 rounded-lg text-sm inline-block">
           返回登入
-        </a>
+        </Link>
       </div>
     </div>
   );

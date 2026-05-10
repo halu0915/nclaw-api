@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useCustomer } from "../layout";
 import StatCard from "@/components/StatCard";
 
@@ -163,7 +164,7 @@ export default function BillingPage() {
         </div>
         {planPrice === 0 ? (
           <div className="text-sm text-gray-400">
-            免費方案無需付款。<a href="/plans" className="text-blue-400 hover:text-blue-300">升級方案</a>以解鎖更多功能。
+            免費方案無需付款。<Link href="/plans" className="text-blue-400 hover:text-blue-300">升級方案</Link>以解鎖更多功能。
           </div>
         ) : (
           <div className="text-sm text-gray-400">

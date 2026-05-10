@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 
 const t = {
   en: {
@@ -130,27 +131,27 @@ export default function Home() {
       {/* Header */}
       <header className="border-b border-amber-400/10 backdrop-blur-xl bg-gray-950/80 sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between gap-6">
-          <a href="/" className="flex items-center gap-3 shrink-0">
+          <Link href="/" className="flex items-center gap-3 shrink-0">
             <div className="w-8 h-8 bg-gradient-to-br from-amber-300 via-amber-400 to-amber-600 rounded-lg flex items-center justify-center font-bold text-sm text-gray-900 shadow-lg shadow-amber-500/30 ring-1 ring-amber-200/40">
               N+
             </div>
             <span className="text-xl font-semibold bg-gradient-to-r from-white to-amber-200 bg-clip-text text-transparent">N+Claw API</span>
-          </a>
+          </Link>
 
           <nav className="hidden md:flex items-center gap-6 text-sm">
-            <a href="/chat" className="text-gray-400 hover:text-white transition-colors">Chat</a>
-            <a href="/pro" className="text-gray-400 hover:text-white transition-colors">Pro</a>
-            <a href="/bot" className="text-gray-400 hover:text-white transition-colors">Bot</a>
-            <a href="/" className="text-white font-medium border-b border-amber-400 pb-0.5">Developer</a>
+            <Link href="/chat" className="text-gray-400 hover:text-white transition-colors">Chat</Link>
+            <Link href="/pro" className="text-gray-400 hover:text-white transition-colors">Pro</Link>
+            <Link href="/bot" className="text-gray-400 hover:text-white transition-colors">Bot</Link>
+            <Link href="/" className="text-white font-medium border-b border-amber-400 pb-0.5">Developer</Link>
           </nav>
 
           <div className="flex items-center gap-3 sm:gap-4 shrink-0">
-            <a href="/login" className="text-sm text-gray-400 hover:text-white transition-colors">
+            <Link href="/login" className="text-sm text-gray-400 hover:text-white transition-colors">
               {lang === "zh" ? "登入" : "Login"}
-            </a>
-            <a href="/register" className="text-sm px-4 py-1.5 rounded-full bg-blue-600 hover:bg-blue-500 transition-colors">
+            </Link>
+            <Link href="/register" className="text-sm px-4 py-1.5 rounded-full bg-blue-600 hover:bg-blue-500 transition-colors">
               {l.register}
-            </a>
+            </Link>
             <button
               onClick={() => setLang(lang === "en" ? "zh" : "en")}
               className="px-3 py-1 rounded-full border border-gray-700 text-sm text-gray-400 hover:text-white hover:border-gray-500 transition-colors"
@@ -161,10 +162,10 @@ export default function Home() {
         </div>
 
         <nav className="md:hidden flex items-center justify-around border-t border-white/5 py-2 text-sm">
-          <a href="/chat" className="text-gray-400 px-3 py-1">Chat</a>
-          <a href="/pro" className="text-gray-400 px-3 py-1">Pro</a>
-          <a href="/bot" className="text-gray-400 px-3 py-1">Bot</a>
-          <a href="/" className="text-white font-medium px-3 py-1 border-b border-amber-400">Developer</a>
+          <Link href="/chat" className="text-gray-400 px-3 py-1">Chat</Link>
+          <Link href="/pro" className="text-gray-400 px-3 py-1">Pro</Link>
+          <Link href="/bot" className="text-gray-400 px-3 py-1">Bot</Link>
+          <Link href="/" className="text-white font-medium px-3 py-1 border-b border-amber-400">Developer</Link>
         </nav>
       </header>
 
@@ -190,18 +191,18 @@ export default function Home() {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a
+            <Link
               href="/chat"
               className="px-8 py-4 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 rounded-xl text-lg font-semibold transition-all shadow-lg shadow-blue-600/25 hover:shadow-blue-500/40 hover:scale-105"
             >
               {l.tryNow}
-            </a>
-            <a
+            </Link>
+            <Link
               href="/register"
               className="px-8 py-4 border border-amber-400/30 hover:border-amber-400/60 rounded-xl text-lg font-semibold transition-all backdrop-blur hover:bg-amber-400/5 text-amber-100"
             >
               {l.register}
-            </a>
+            </Link>
           </div>
         </div>
 
@@ -254,13 +255,13 @@ export default function Home() {
                   <li>{plan.rpm}</li>
                   <li>{plan.tokens}</li>
                 </ul>
-                <a href="/register" className={`block mt-4 text-center py-2 rounded-lg text-sm font-medium transition-colors ${
+                <Link href="/register" className={`block mt-4 text-center py-2 rounded-lg text-sm font-medium transition-colors ${
                   plan.name === l.pro
                     ? "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-gray-900 shadow shadow-amber-500/30"
                     : "border border-white/10 hover:bg-white/5 text-gray-300"
                 }`}>
                   {lang === "zh" ? "開始使用" : "Get Started"}
-                </a>
+                </Link>
               </div>
             ))}
           </div>

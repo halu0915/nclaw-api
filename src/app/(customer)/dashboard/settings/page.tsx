@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useCustomer } from "../../layout";
 
 const PLAN_LABELS: Record<string, string> = {
@@ -109,7 +110,7 @@ export default function SettingsPage() {
       <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">目前方案</h2>
-          <a href="/plans" className="text-sm text-blue-400 hover:text-blue-300">變更方案</a>
+          <Link href="/plans" className="text-sm text-blue-400 hover:text-blue-300">變更方案</Link>
         </div>
         <div className="flex items-center gap-4 mb-4">
           <span className="px-3 py-1 bg-blue-600/20 text-blue-400 rounded-full text-sm font-medium">

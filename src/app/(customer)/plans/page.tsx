@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 interface CustomerData {
   plan: string;
@@ -101,7 +102,7 @@ export default function PlansPage() {
         </div>
 
       <div className="text-center mt-8">
-        <a href="/dashboard" className="text-gray-500 hover:text-gray-300 text-sm">返回後台</a>
+        <Link href="/dashboard" className="text-gray-500 hover:text-gray-300 text-sm">返回後台</Link>
       </div>
     </div>
   );

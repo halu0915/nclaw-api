@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 
 // Only allow redirect to *.nplusstar.ai (or relative path)
 function safeRedirect(target: string | null): string | null {
@@ -92,9 +93,9 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gray-950 text-white flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <a href="/" className="inline-flex items-center gap-2 mb-4">
+          <Link href="/" className="inline-flex items-center gap-2 mb-4">
             <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center font-bold">N+</div>
-          </a>
+          </Link>
           <h1 className="text-2xl font-bold">登入</h1>
           <p className="text-gray-400 mt-2">登入 N+Claw 客戶後台</p>
         </div>
@@ -138,7 +139,7 @@ export default function LoginPage() {
         </form>
 
         <p className="text-center text-gray-500 text-sm mt-6">
-          還沒有帳號？<a href="/register" className="text-blue-400 hover:text-blue-300"> 免費註冊</a>
+          還沒有帳號？<Link href="/register" className="text-blue-400 hover:text-blue-300"> 免費註冊</Link>
         </p>
       </div>
     </div>

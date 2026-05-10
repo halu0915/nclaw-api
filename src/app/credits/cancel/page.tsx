@@ -1,3 +1,10 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "訂閱已取消 — N+Claw API",
+  description: "本次點數加值流程已取消，可隨時重新購買 N+Star API Credits。",
+};
+
 export default function CreditsCancel() {
   return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#0a0a0a", color: "#fff", fontFamily: "system-ui" }}>
