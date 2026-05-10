@@ -1,9 +1,9 @@
 /**
- * /v1/embeddings — OpenAI-compatible passthrough.
+ * /v1/embeddings — OpenAI-compatible passthrough via OpenRouter.
  *
- * Forwards to api.openai.com/v1/embeddings using server-side OPENAI_API_KEY.
- * Records usage so embeddings count toward the customer's tenant quota
- * the same way chat completions do.
+ * Forwards to openrouter.ai/api/v1/embeddings using server-side
+ * OPENROUTER_API_KEY. Records usage so embeddings count toward the
+ * customer's tenant quota the same way chat completions do.
  *
  * No streaming, no tool-calls — keeps it short on purpose (per
  * "concise code" guidance). Pricing for embeddings is not in MODEL_COSTS,
@@ -19,7 +19,7 @@ import { log, newRequestId } from "@/lib/log";
 
 export const maxDuration = 60;
 
-const OPENAI_URL = "https://api.openai.com/v1/embeddings";
+const OPENAI_URL = "https://openrouter.ai/api/v1/embeddings";
 const MAX_BODY_BYTES = 5_000_000; // 5MB — embedding inputs can be long
 
 function stripPrefix(model: string): string {
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const upstreamKey = process.env.OPENAI_API_KEY;
+  const upstreamKey = process.env.OPENROUTER_API_KEY;
   if (!upstreamKey) {
     log.error("embeddings.no_upstream_key", { request_id: requestId });
     return NextResponse.json(
@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const upstreamBody = { ...body, model: stripPrefix(body.model) };
+  const upstreamBody = { ...body, model: body.model };
   const upstream = await fetch(OPENAI_URL, {
     method: "POST",
     headers: {
@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
     tenantId: apiKey.tenantId,
     apiKeyId: apiKey.id,
     departmentId: apiKey.departmentId ?? undefined,
-    provider: "openai",
+    provider: "openrouter",
     model: body.model,
     inputTokens,
     outputTokens: 0,
