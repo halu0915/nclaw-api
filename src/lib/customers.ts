@@ -175,6 +175,128 @@ export async function deductDesignCreditAtomic(
   }
 }
 
+/**
+ * Verify a Google ID token against Google's tokeninfo endpoint.
+ * Returns the verified payload (email + sub) or null on failure.
+ * Also checks the audience (aud) matches our Desktop client_id to prevent
+ * token replay from other Google apps.
+ */
+async function verifyGoogleIdToken(idToken: string): Promise<{
+  sub: string;
+  email: string;
+  emailVerified: boolean;
+  name: string;
+} | null> {
+  try {
+    const res = await fetch(
+      `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idToken)}`
+    );
+    if (!res.ok) return null;
+    const data = (await res.json()) as {
+      sub?: string;
+      email?: string;
+      email_verified?: string | boolean;
+      aud?: string;
+      name?: string;
+      exp?: string;
+    };
+    if (!data.sub || !data.email) return null;
+    const expectedAud = process.env.GOOGLE_DESKTOP_CLIENT_ID;
+    if (expectedAud && data.aud && data.aud !== expectedAud) return null;
+    if (data.exp && Number(data.exp) * 1000 < Date.now()) return null;
+    return {
+      sub: data.sub,
+      email: data.email,
+      emailVerified: data.email_verified === true || data.email_verified === "true",
+      name: data.name ?? "",
+    };
+  } catch (err) {
+    console.error("[customers] verifyGoogleIdToken error:", err);
+    return null;
+  }
+}
+
+/**
+ * Login or register via Google. Three paths:
+ *   1. google_id already in DB → login
+ *   2. google_id unknown but email matches existing customer → bind google_id
+ *      to that customer (auto-merge; user clicks Google after email signup)
+ *   3. neither matches → create new tenant + customer (no password set)
+ *
+ * On new registration, name comes from Google profile (used for both
+ * companyName fallback and contactName); user can edit in Pro app.
+ */
+export async function loginOrRegisterGoogle(idToken: string): Promise<
+  { customer: Customer; token: string; isNewCustomer: boolean }
+  | { error: string }
+> {
+  const profile = await verifyGoogleIdToken(idToken);
+  if (!profile) return { error: "Google 身份驗證失敗，請重試" };
+  if (!profile.emailVerified) {
+    return { error: "Google 帳號 email 未驗證，請先在 Google 端完成驗證" };
+  }
+
+  try {
+    // Path 1: existing Google ID
+    const byGoogle = await query(
+      `SELECT ${CUSTOMER_COLS} FROM customers WHERE google_id = $1`,
+      [profile.sub]
+    );
+    if (byGoogle.rows.length > 0) {
+      const customer = rowToCustomer(byGoogle.rows[0]);
+      return { customer, token: generateToken(customer.id), isNewCustomer: false };
+    }
+
+    // Path 2: existing email — bind google_id and login
+    const byEmail = await query(
+      `SELECT ${CUSTOMER_COLS} FROM customers WHERE email = $1`,
+      [profile.email]
+    );
+    if (byEmail.rows.length > 0) {
+      await query(`UPDATE customers SET google_id = $1 WHERE email = $2`, [
+        profile.sub,
+        profile.email,
+      ]);
+      const customer = rowToCustomer(byEmail.rows[0]);
+      return { customer, token: generateToken(customer.id), isNewCustomer: false };
+    }
+
+    // Path 3: brand new customer
+    await ensureDemoTenant();
+    const tenantInsert = await query<{ id: string }>(
+      `INSERT INTO tenants (name, plan, status) VALUES ($1, 'free', 'active') RETURNING id`,
+      [profile.name || profile.email]
+    );
+    const newTenantId = tenantInsert.rows[0].id;
+
+    const trialEnd = new Date();
+    trialEnd.setDate(trialEnd.getDate() + 14);
+
+    const inserted = await query(
+      `INSERT INTO customers
+         (tenant_id, email, password_hash, google_id, company_name, contact_name,
+          phone, plan, api_key, status, token_quota, tokens_used, trial_ends_at)
+       VALUES ($1,$2,NULL,$3,$4,$5,'','free',$6,'trial',$7,0,$8)
+       RETURNING ${CUSTOMER_COLS}`,
+      [
+        newTenantId,
+        profile.email,
+        profile.sub,
+        profile.name || profile.email,
+        profile.name || profile.email,
+        generateApiKey(),
+        PLAN_QUOTAS.free,
+        trialEnd.toISOString(),
+      ]
+    );
+    const customer = rowToCustomer(inserted.rows[0]);
+    return { customer, token: generateToken(customer.id), isNewCustomer: true };
+  } catch (err) {
+    console.error("[customers] loginOrRegisterGoogle error:", err);
+    return { error: "Google 登入失敗，請稍後再試" };
+  }
+}
+
 export async function registerCustomer(data: {
   email: string;
   password: string;

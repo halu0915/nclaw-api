@@ -243,6 +243,19 @@ async function migrate() {
       ALTER TABLE customers
         ADD COLUMN IF NOT EXISTS design_credits INTEGER NOT NULL DEFAULT 0;
     `);
+    // Google OAuth: identify users by Google sub claim; password_hash becomes
+    // optional for Google-only signups.
+    await client.query(`
+      ALTER TABLE customers
+        ADD COLUMN IF NOT EXISTS google_id TEXT;
+    `);
+    await client.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS customers_google_id_uq
+        ON customers(google_id) WHERE google_id IS NOT NULL;
+    `);
+    await client.query(`
+      ALTER TABLE customers ALTER COLUMN password_hash DROP NOT NULL;
+    `);
     console.log("[migrate] Table customers created.");
 
     // ──────────────────────────────────────────
