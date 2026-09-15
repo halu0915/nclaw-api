@@ -12,8 +12,8 @@ interface ModelDef {
 
 const MODEL_COSTS: Record<string, ModelDef> = {
   // Anthropic — direct API, prompt caching supported
-  "anthropic/claude-opus-4-7": { input: 5, output: 25, cachedInput: 0.5, provider: "anthropic", providerModel: "claude-opus-4-7-20260401", contextWindow: 200_000, supportsCache: true },
-  "anthropic/claude-sonnet-4-6": { input: 3, output: 15, cachedInput: 0.3, provider: "anthropic", providerModel: "claude-sonnet-4-6-20250929", contextWindow: 200_000, supportsCache: true },
+  "anthropic/claude-opus-4-7": { input: 5, output: 25, cachedInput: 0.5, provider: "anthropic", providerModel: "claude-opus-5", contextWindow: 200_000, supportsCache: true },
+  "anthropic/claude-sonnet-4-6": { input: 3, output: 15, cachedInput: 0.3, provider: "anthropic", providerModel: "claude-sonnet-5", contextWindow: 200_000, supportsCache: true },
   "anthropic/claude-haiku-4-5": { input: 0.8, output: 4, cachedInput: 0.08, provider: "anthropic", providerModel: "claude-haiku-4-5-20251001", contextWindow: 200_000, supportsCache: true },
   // OpenAI — direct API, automatic caching
   "openai/gpt-5.5": { input: 5, output: 30, cachedInput: 2.5, provider: "openai", providerModel: "gpt-5.5", contextWindow: 256_000, supportsCache: true },
