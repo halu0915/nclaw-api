@@ -1,5 +1,6 @@
 "use client";
 
+import { NPlus } from "@/components/nplus";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 
@@ -135,7 +136,7 @@ export default function Home() {
             <div className="w-8 h-8 bg-gradient-to-br from-amber-300 via-amber-400 to-amber-600 rounded-lg flex items-center justify-center font-bold text-sm text-gray-900 shadow-lg shadow-amber-500/30 ring-1 ring-amber-200/40">
               N+
             </div>
-            <span className="text-xl font-semibold bg-gradient-to-r from-white to-amber-200 bg-clip-text text-transparent">N+Claw API</span>
+            <span className="text-xl font-semibold bg-gradient-to-r from-white to-amber-200 bg-clip-text text-transparent">N<NPlus />Claw API</span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-6 text-sm">

@@ -1,5 +1,6 @@
 "use client";
 
+import { NPlus } from "@/components/nplus";
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 
@@ -121,7 +122,7 @@ export default function ChatPage() {
             <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-xs">
               N+
             </div>
-            <span className="font-semibold">N+Claw Chat</span>
+            <span className="font-semibold">N<NPlus />Claw Chat</span>
           </Link>
           <div className="flex items-center gap-2">
             <div className="relative">
@@ -205,7 +206,7 @@ export default function ChatPage() {
                   N+
                 </div>
               </div>
-              <h2 className="text-2xl font-semibold mb-2 bg-gradient-to-r from-white via-amber-100 to-amber-300 bg-clip-text text-transparent">N+Claw Chat</h2>
+              <h2 className="text-2xl font-semibold mb-2 bg-gradient-to-r from-white via-amber-100 to-amber-300 bg-clip-text text-transparent">N<NPlus />Claw Chat</h2>
               <p className="text-gray-400 mb-8 text-center max-w-md">
                 MEP 機電工程 AI 助手，協助估算、法規查詢、材料比較等專業問題
               </p>
