@@ -4,179 +4,29 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>N+Claw Pro — 工程業 AI 同事 | 恩加斯達國際</title>
-<meta name="description" content="工程業個人 worker 的 AI 同事。預裝法規查詢、估算報價、消防設計、CAD 讀取等工程 skill。">
+<meta name="description" content="工程業桌面工作助手。探索工程知識庫與技能工作流；v0.20 已推出，免費試用。">
 <meta property="og:title" content="N+Claw Pro — 工程業 AI 同事">
-<meta property="og:description" content="工程業個人 worker 的 AI 同事，預裝 8 個工程 skill。">
+<meta property="og:description" content="工程業桌面工作助手。v0.20 免費試用，七位工程助手、白底原生介面。">
 <meta property="og:image" content="https://nplusstar.ai/og-image.png">
 <meta property="og:url" content="https://nplusstar.ai/pro">
-<link rel="icon" href="/favicon.ico" sizes="32x32">
-<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="icon" href="https://nplusstar.ai/favicon.ico" sizes="32x32">
+<link rel="apple-touch-icon" href="https://nplusstar.ai/apple-touch-icon.png">
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    font-family: -apple-system, "Helvetica Neue", "PingFang TC", sans-serif;
-    background: linear-gradient(180deg, #020617 0%, #0f172a 50%, #020617 100%);
-    color: #f1f5f9;
-    min-height: 100vh;
-    line-height: 1.6;
-  }
-  .nav {
-    padding: 16px 24px;
-    display: flex; align-items: center; justify-content: space-between;
-    border-bottom: 1px solid rgba(251,191,36,0.12);
-    flex-wrap: wrap; gap: 12px;
-  }
-  .nav a { color: #94a3b8; text-decoration: none; font-size: 0.9rem; }
-  .nav a:hover { color: #f1f5f9; }
-  .nav-brand { font-weight: 700; color: #f1f5f9; font-size: 1rem; }
-  .nav-links { display: flex; gap: 20px; }
-  .nav-links a.active { color: #fbbf24; border-bottom: 1px solid #fbbf24; padding-bottom: 2px; }
-  main { max-width: 880px; margin: 0 auto; padding: 48px 24px; }
-  .hero { text-align: center; margin-bottom: 64px; }
-  .hero img { width: 120px; height: 120px; border-radius: 24px; margin: 0 auto 24px; box-shadow: 0 12px 32px rgba(0,0,0,0.3); }
-  .hero h1 { font-size: 3rem; margin-bottom: 12px; letter-spacing: -1px; }
-  .hero .tag { font-size: 1.25rem; color: #cbd5e1; margin-bottom: 8px; }
-  .hero .sub { font-size: 0.85rem; color: #64748b; margin-bottom: 32px; }
-  .cta { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-  .btn-primary {
-    background: #2563eb; color: #fff; padding: 16px 32px;
-    border-radius: 12px; font-weight: 700; font-size: 1.1rem;
-    text-decoration: none; transition: all 0.2s;
-    box-shadow: 0 8px 24px rgba(37,99,235,0.25);
-  }
-  .btn-primary:hover { background: #1d4ed8; transform: translateY(-1px); }
-  .meta { font-size: 0.85rem; color: #64748b; }
-
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 64px; }
-  .card {
-    background: rgba(15,23,42,0.5); border: 1px solid rgba(148,163,184,0.15);
-    border-radius: 16px; padding: 24px;
-  }
-  .card-num {
-    display: inline-block; font-size: 0.7rem; font-weight: 700;
-    color: #fbbf24; letter-spacing: 0.18em; margin-bottom: 14px;
-    font-family: -apple-system, "SF Mono", monospace;
-  }
-  .card h3 { font-size: 1.05rem; margin-bottom: 8px; color: #f1f5f9; }
-  .card p { font-size: 0.9rem; color: #94a3b8; }
-
-  h2 { font-size: 1.75rem; text-align: center; margin-bottom: 32px; letter-spacing: -0.5px; }
-  .steps { max-width: 640px; margin: 0 auto 64px; display: flex; flex-direction: column; gap: 14px; }
-  .step {
-    background: rgba(15,23,42,0.4); border: 1px solid rgba(148,163,184,0.12);
-    border-radius: 12px; padding: 18px; display: flex; gap: 16px;
-  }
-  .step-num {
-    flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%;
-    background: #2563eb; color: #fff; font-weight: 700;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .step h4 { margin-bottom: 6px; font-size: 1rem; }
-  .step p { font-size: 0.88rem; color: #94a3b8; }
-
-  .req {
-    background: rgba(15,23,42,0.4); border: 1px solid rgba(148,163,184,0.12);
-    border-radius: 16px; padding: 24px; margin-bottom: 24px;
-  }
-  .req h2 { font-size: 1.15rem; text-align: left; margin-bottom: 16px; }
-  .req ul { list-style: none; }
-  .req li { font-size: 0.9rem; color: #94a3b8; padding: 4px 0; }
-
-  .notice {
-    background: rgba(217, 119, 6, 0.08);
-    border: 1px solid rgba(217, 119, 6, 0.25);
-    border-radius: 16px; padding: 24px;
-  }
-  .notice h3 { color: #fbbf24; margin-bottom: 12px; font-size: 1rem; }
-  .notice li { color: #fde68a; font-size: 0.88rem; padding: 3px 0; }
-  .notice .contact { color: rgba(253,230,138,0.7); font-size: 0.78rem; margin-top: 16px; }
-  .notice a { color: #fde68a; }
-
-  footer {
-    text-align: center; padding: 32px 24px; color: #64748b; font-size: 0.85rem;
-    border-top: 1px solid rgba(148,163,184,0.1); margin-top: 48px;
-  }
-  footer a { color: #94a3b8; text-decoration: none; }
-  footer a:hover { color: #f1f5f9; }
-</style>
-</head>
-<body>
-
-<nav class="nav">
-  <a href="https://nplusstar.ai" class="nav-brand">N<span class="nplus" style="position:relative;display:inline-block;width:.92em;height:.92em;vertical-align:-.1em;margin:0 .05em"><span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;font-size:0;line-height:0">+</span><svg viewBox="0 0 140 140" width="100%" height="100%" aria-hidden="true" focusable="false" style="display:block"><g stroke="#c8a97e" stroke-width="13" stroke-linecap="round"><line x1="70" y1="8" x2="70" y2="132"/><line x1="8" y1="70" x2="132" y2="70"/></g><circle cx="70" cy="70" r="22" fill="#c8a97e" opacity=".15"/><polygon fill="#c8a97e" points="70.0,26.0 79.9,56.4 111.8,56.4 86.0,75.2 95.9,105.6 70.0,86.8 44.1,105.6 54.0,75.2 28.2,56.4 60.1,56.4"/></svg></span>Star</a>
-  <div class="nav-links">
-    <a href="/chat">Chat</a>
-    <a href="/pro" class="active">Pro</a>
-    <a href="/bot">Bot</a>
-    <a href="/">Developer</a>
-  </div>
-</nav>
-
-<main>
-  <section class="hero">
-    <img src="/logo.png" alt="N+Star">
-    <h1>N<span class="nplus" style="position:relative;display:inline-block;width:.92em;height:.92em;vertical-align:-.1em;margin:0 .05em"><span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;font-size:0;line-height:0">+</span><svg viewBox="0 0 140 140" width="100%" height="100%" aria-hidden="true" focusable="false" style="display:block"><g stroke="#c8a97e" stroke-width="13" stroke-linecap="round"><line x1="70" y1="8" x2="70" y2="132"/><line x1="8" y1="70" x2="132" y2="70"/></g><circle cx="70" cy="70" r="22" fill="#c8a97e" opacity=".15"/><polygon fill="#c8a97e" points="70.0,26.0 79.9,56.4 111.8,56.4 86.0,75.2 95.9,105.6 70.0,86.8 44.1,105.6 54.0,75.2 28.2,56.4 60.1,56.4"/></svg></span>Claw Pro</h1>
-    <p class="tag">唯一不可逆的是，時間！真實地把它還給你</p>
-    <p class="sub">v0.19.1 · 由恩加斯達國際出品</p>
-    <div class="cta">
-      <a class="btn-primary" href="https://1a1otutywvelybdd.public.blob.vercel-storage.com/NClawPro-v0.19.1-signed-notarized.dmg" download>下載 macOS 版</a>
-      <span class="meta">macOS 11.0+ · 212 MB · darwin-arm64 · 免費試用</span>
-    </div>
-  </section>
-
-  <section class="grid">
-    <div class="card">
-      <div class="card-num">01 / SKILL</div>
-      <h3>預裝神奇技能</h3>
-      <p>不用再摸索。消防灑水管徑速查、CAD/DWG 讀取、估算報價、規範查詢、PDF 圖說解析、廠商比價、工法 SOP、設計 review。</p>
-    </div>
-    <div class="card">
-      <div class="card-num">02 / KB</div>
-      <h3>工程專屬領域</h3>
-      <p>不會問老婆給丈母娘。每次對話自動帶入規範條文、廠商行情、工法步驟，引用可追溯。</p>
-    </div>
-    <div class="card">
-      <div class="card-num">03 / ROUTING</div>
-      <h3>智慧選模型</h3>
-      <p>省去你的荷包。Gemini / Claude / GPT / DeepSeek / Qwen 統一 API，任務自動派最便宜可用的。</p>
-    </div>
-    <div class="card">
-      <div class="card-num">04 / GUI</div>
-      <h3>零程式，桌面版</h3>
-      <p>小白也可用。雙擊 .app 開瀏覽器即用，第一次啟動自動配置。</p>
-    </div>
-  </section>
-
-  <section>
-    <h2>安裝步驟</h2>
-    <ol class="steps">
-      <li class="step"><div class="step-num">1</div><div><h4>下載 DMG</h4><p>點上方按鈕下載 NClawPro-v0.19.1.dmg（檔案 222 MB）</p></div></li>
-      <li class="step"><div class="step-num">2</div><div><h4>雙擊掛載</h4><p>雙擊 dmg 檔開啟，看到 N+Claw Pro 圖示</p></div></li>
-      <li class="step"><div class="step-num">3</div><div><h4>拖到 Applications</h4><p>把 N+Claw Pro 拖到右邊的 Applications 資料夾</p></div></li>
-      <li class="step"><div class="step-num">4</div><div><h4>繞過 Gatekeeper（首次）</h4><p>雙擊 N+Claw Pro → 第一次會看到「無法打開」對話框。請進「系統設定 → 隱私與安全性」拉到最下方，點「仍要打開」並輸入密碼。再雙擊就能開了。如還不行，開啟 Terminal 貼：<code>xattr -cr "/Applications/N+Claw Pro.app"</code></p></div></li>
-      <li class="step"><div class="step-num">5</div><div><h4>首次啟動</h4><p>自動安裝 OpenClaw 與配置（需要 Node.js，沒裝會引導你下載）</p></div></li>
-      <li class="step"><div class="step-num">6</div><div><h4>開始用</h4><p>瀏覽器自動開啟 N+Claw Pro Control UI，可以開始 chat</p></div></li>
-    </ol>
-  </section>
-
-  <section class="req">
-    <h2>系統需求</h2>
-    <ul>
-      <li>• macOS 11.0+（Big Sur 以上，Apple Silicon 或 Intel）</li>
-      <li>• Node.js 22+（沒裝會引導下載）</li>
-      <li>• 網路（首次安裝下載 OpenClaw 約 200 MB）</li>
-      <li>• ~200 MB 硬碟空間</li>
-    </ul>
-  </section>
-
-  <section class="notice">
-    <p class="contact">支援聯繫：<a href="mailto:support@nplusstar.ai">support@nplusstar.ai</a> · N+Claw by 恩加斯達國際</p>
-  </section>
-</main>
-
-<footer>
-  <p>© 2026 恩加斯達國際 · <a href="https://nplusstar.ai">nplusstar.ai</a> · <a href="mailto:support@nplusstar.ai">support@nplusstar.ai</a></p>
-</footer>
-
-</body>
-</html>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Inter+Tight:wght@400;500;600&family=Noto+Sans+TC:wght@400;500&display=swap');
+:root{--ink:#15171A;--muted:#414147;--gold:#C9A227;--paper:#F3F4F6}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--paper);color:var(--ink);font-family:Inter,'PingFang TC','Noto Sans TC',sans-serif;font-size:16px;line-height:1.5}a{color:inherit}a:focus-visible,summary:focus-visible{outline:3px solid #806219;outline-offset:5px}h1,h2,p,figure{margin:0}h1,h2{font-family:'Inter Tight','PingFang TC','Noto Sans TC',sans-serif;font-weight:400;letter-spacing:-.04em}a{text-decoration:none}.skip{position:absolute;top:-70px;left:16px;z-index:5;padding:12px;background:white}.skip:focus{top:16px}.hero{min-height:900px;height:100svh;max-height:1120px;position:relative;background:radial-gradient(ellipse at 50% 44%,#c1b5af70,transparent 42%),linear-gradient(180deg,#A1A0A9,#A79F9C);color:white;display:flex;align-items:center;justify-content:center}.nav{position:absolute;top:20px;left:0;width:100%;padding:0 max(32px,calc((100% - 1240px)/2));display:flex;justify-content:space-between;align-items:center}.brand{font-size:22px;font-weight:600;letter-spacing:-.04em}.pill{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:10px 18px;border-radius:999px;background:#F4F1ED;color:var(--ink);font-size:14px;font-weight:500;transition:background .2s}.pill:hover{background:white}.pill.dark{background:var(--ink);color:white}.pill.dark:hover{background:#414147}.hero-content{text-align:center;padding:90px 16px 120px}.emblem{width:172px;height:172px;margin:0 auto 74px;transform:rotate(-9deg);filter:drop-shadow(9px 13px 0 #806643) drop-shadow(0 24px 22px #50473555)}.emblem svg{width:100%;height:100%}h1{font-size:64px;line-height:1.1;font-weight:500;letter-spacing:-.045em}.hero-sub{font-size:24px;margin-top:22px;letter-spacing:-.02em}.scroll{position:absolute;bottom:32px;padding:12px;font-size:25px}.chapters{max-width:1240px;margin:auto;padding:0 0 90px}.chapter{padding:52px 0 72px;border-top:1px solid #15171A}.chapter:first-child{border-top:0;padding-top:72px}.chapter-head{display:grid;grid-template-columns:160px 1.25fr 1fr;gap:32px;align-items:start}.chapter-number{color:var(--gold);font-family:'Inter Tight',sans-serif;font-size:58px;line-height:1;letter-spacing:-.04em}.chapter h2{font-size:52px;line-height:1.1}.chapter-copy{color:var(--muted);padding-top:5px;line-height:1.6}.status{display:block;font-size:12px;color:#64656b;margin-bottom:12px;letter-spacing:.06em}.visual{margin:40px 0 0 192px;aspect-ratio:16/9;background:#1C1F23;border-radius:24px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}.visual figcaption{position:absolute;bottom:24px;left:28px;right:28px;color:#a9abb1;font-size:12px;letter-spacing:.04em}.visual img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:left top}.visual::after{content:'';position:absolute;left:0;right:0;bottom:0;height:96px;background:linear-gradient(transparent,rgba(21,23,26,.85));pointer-events:none}.visual figcaption{z-index:1;text-align:right;background:rgba(21,23,26,.72);padding:6px 10px;border-radius:8px;left:auto;width:max-content;max-width:60%}.visual-mark{color:#73747B;font-family:'Inter Tight',sans-serif;font-size:24px;letter-spacing:-.03em}.details{margin:32px 0 0 192px}.pricing{border-left:4px solid var(--gold);background:#e9eaed;padding:32px;display:flex;gap:32px;align-items:center}.price{font-family:'Inter Tight',sans-serif;color:#8a6a0c;font-size:72px;line-height:1;white-space:nowrap}.pricing h3{font-weight:400;font-size:26px;margin:0 0 8px}.pricing p{color:var(--muted)}.download-row{display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin:28px 0}.small{font-size:14px;color:#64656b}.specs{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin:32px 0}.specs h3{font-size:18px;font-weight:500;margin:0 0 12px}.specs ul{padding-left:20px;margin:0;color:var(--muted)}details{border-top:1px solid #c7c8cc;padding:20px 0}summary{cursor:pointer;font-size:18px}details ol{padding-left:24px;color:var(--muted)}details li{padding:7px 0}.notice{color:var(--muted);font-size:14px;margin-top:20px}.notice a{text-decoration:underline}footer{background:white;padding:32px max(32px,calc((100% - 1240px)/2));display:flex;gap:20px;justify-content:space-between;color:#64656b;font-size:13px}footer a:hover{text-decoration:underline}
+@media(max-width:1304px){.chapters{margin:0 32px}.chapter-head{grid-template-columns:120px 1.25fr 1fr;gap:24px}.visual,.details{margin-left:144px}.chapter h2{font-size:46px}}
+@media(max-width:760px){.hero{min-height:740px;max-height:900px}.nav{padding:0 16px}.brand{font-size:20px}.hero-content{padding:90px 16px}.emblem{width:140px;height:140px;margin-bottom:64px}h1{font-size:44px}.hero-sub{font-size:20px;max-width:330px;margin:20px auto 0}.chapters{margin:0 16px;padding-bottom:32px}.chapter,.chapter:first-child{padding:40px 0}.chapter-head{grid-template-columns:1fr;gap:20px}.chapter-number{font-size:36px}.chapter h2{font-size:38px;line-height:1.16}.chapter-copy{padding:0}.visual,.details{margin-left:0;margin-top:28px}.visual{aspect-ratio:4/3}.visual img{transform:scale(1.75);transform-origin:64% 22%}.visual figcaption{left:20px;bottom:20px;right:20px}.pricing{padding:24px;gap:20px;align-items:flex-start;flex-direction:column}.price{font-size:64px}.pricing h3{font-size:24px}.specs{grid-template-columns:1fr}.download-row{gap:14px}footer{padding:28px 16px;flex-direction:column;gap:12px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.pill{transition:none}}
+</style></head><body><a class="skip" href="#overview">跳至產品介紹</a>
+<header class="hero"><nav class="nav" aria-label="主要導覽"><a class="brand" href="https://nplusstar.ai/" aria-label="N+Star 首頁">N<span class="nplus" style="position:relative;display:inline-block;width:.92em;height:.92em;vertical-align:-.1em;margin:0 .05em"><span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;font-size:0;line-height:0">+</span><svg viewBox="0 0 140 140" width="100%" height="100%" aria-hidden="true" focusable="false" style="display:block"><g stroke="#c8a97e" stroke-width="13" stroke-linecap="round"><line x1="70" y1="8" x2="70" y2="132"/><line x1="8" y1="70" x2="132" y2="70"/></g><circle cx="70" cy="70" r="22" fill="#c8a97e" opacity=".15"/><polygon fill="#c8a97e" points="70.0,26.0 79.9,56.4 111.8,56.4 86.0,75.2 95.9,105.6 70.0,86.8 44.1,105.6 54.0,75.2 28.2,56.4 60.1,56.4"/></svg></span>Star</a><a class="pill" href="#download">下載 macOS 版 <span aria-hidden="true">↗</span></a></nav><div class="hero-content"><div class="emblem" aria-hidden="true"><svg viewBox="0 0 140 140" width="100%" height="100%" aria-hidden="true" focusable="false" style="display:block"><g stroke="#c8a97e" stroke-width="13" stroke-linecap="round"><line x1="70" y1="8" x2="70" y2="132"/><line x1="8" y1="70" x2="132" y2="70"/></g><circle cx="70" cy="70" r="22" fill="#c8a97e" opacity=".15"/><polygon fill="#c8a97e" points="70.0,26.0 79.9,56.4 111.8,56.4 86.0,75.2 95.9,105.6 70.0,86.8 44.1,105.6 54.0,75.2 28.2,56.4 60.1,56.4"/></svg></div><h1 aria-label="N+Claw Pro">N<span class="nplus" style="position:relative;display:inline-block;width:.92em;height:.92em;vertical-align:-.1em;margin:0 .05em"><span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;font-size:0;line-height:0">+</span><svg viewBox="0 0 140 140" width="100%" height="100%" aria-hidden="true" focusable="false" style="display:block"><g stroke="#c8a97e" stroke-width="13" stroke-linecap="round"><line x1="70" y1="8" x2="70" y2="132"/><line x1="8" y1="70" x2="132" y2="70"/></g><circle cx="70" cy="70" r="22" fill="#c8a97e" opacity=".15"/><polygon fill="#c8a97e" points="70.0,26.0 79.9,56.4 111.8,56.4 86.0,75.2 95.9,105.6 70.0,86.8 44.1,105.6 54.0,75.2 28.2,56.4 60.1,56.4"/></svg></span>Claw Pro</h1><p class="hero-sub">把時間留給工程，把繁瑣交給助手。</p></div><a class="scroll" href="#overview" aria-label="探索產品介紹">⌄</a></header><main class="chapters">
+<section class="chapter" id="overview" aria-labelledby="title-overview"><div class="chapter-head"><span class="chapter-number">01</span><h2 id="title-overview">你的工程日常，<br>多一位好同事。</h2><div class="chapter-copy"><span class="status">什麼是 N+Claw Pro</span><p>從 macOS 桌面啟動，在瀏覽器裡開始對話。不必先學指令，把工程問題交給熟悉領域的工作助手。v0.20 起內建七位工程助手，從估價、法規到工地日報都能直接開始。</p></div></div><figure class="visual" data-screenshot-slot="overview" aria-label="桌面工作入口畫面"><img src="/pro/img/overview.webp" alt="N+Claw Pro 桌面工作入口畫面" loading="lazy" width="1440" height="900"><figcaption>桌面工作入口 · v0.20 介面</figcaption></figure></section>
+<section class="chapter" id="knowledge" aria-labelledby="title-knowledge"><div class="chapter-head"><span class="chapter-number">02</span><h2 id="title-knowledge">工程的答案，<br>有脈絡可循。</h2><div class="chapter-copy"><span class="status">工程知識庫 · 規劃中</span><p>規範條文、廠商行情與工法步驟，是工程判斷的基礎。知識庫將把相關內容帶入對話，讓引用可追溯；目前版本可匯入自己的資料建立知識庫，完整工程知識庫檢索持續擴充中。</p></div></div><figure class="visual" data-screenshot-slot="knowledge" aria-label="工程知識庫畫面"><img src="/pro/img/knowledge.webp" alt="N+Claw Pro 工程知識庫對話畫面" loading="lazy" width="1440" height="900"><figcaption>工程知識庫對話 · v0.20 介面</figcaption></figure></section>
+<section class="chapter" id="workflows" aria-labelledby="title-workflows"><div class="chapter-head"><span class="chapter-number">03</span><h2 id="title-workflows">熟悉的工序，<br>成為順手技能。</h2><div class="chapter-copy"><span class="status">技能與工作流</span><p>消防灑水管徑、CAD／DWG 讀取、估算報價、規範查詢、PDF 圖說解析、廠商比價、工法 SOP 與設計審查，是完整八項技能的方向。目前提供一項示範技能，其餘留待 v1。多模型統一入口與任務路由亦屬產品規劃。</p></div></div><figure class="visual" data-screenshot-slot="workflows" aria-label="技能與工作流畫面"><img src="/pro/img/workflows.webp" alt="N+Claw Pro 技能與工作流畫面" loading="lazy" width="1440" height="900"><figcaption>技能與工作流 · v0.20 介面</figcaption></figure></section>
+<section class="chapter" id="mobile" aria-labelledby="title-mobile"><div class="chapter-head"><span class="chapter-number">04</span><h2 id="title-mobile">離開桌面，<br>工作不必斷線。</h2><div class="chapter-copy"><span class="status">從手機接著做 · 規劃中</span><p>讓現場與辦公室之間的工作能接續，是下一步的方向。現階段僅提供 macOS 桌面版；手機遠端存取、同步及續作尚未列為已交付功能。</p></div></div><figure class="visual" data-screenshot-slot="mobile" aria-label="跨裝置工作方向畫面"><img src="/pro/img/mobile.webp" alt="N+Claw Pro 跨裝置工作方向畫面" loading="lazy" width="1440" height="900"><figcaption>跨裝置工作方向 · v0.20 介面</figcaption></figure></section>
+<section class="chapter" id="privacy" aria-labelledby="title-privacy"><div class="chapter-head"><span class="chapter-number">05</span><h2 id="title-privacy">資料留在哪，<br>先說清楚。</h2><div class="chapter-copy"><span class="status">安全與資料邊界</span><p>桌面啟動不等於所有資料都不出門。首次安裝需要連網；若使用雲端模型，送出的內容仍會由對應服務處理。請勿在早期版本輸入客戶機密；離線推論與資料完全不外傳，並非目前版本的保證。</p></div></div><figure class="visual" data-screenshot-slot="privacy" aria-label="資料與使用邊界畫面"><img src="/pro/img/privacy.webp" alt="N+Claw Pro 資料與使用邊界畫面" loading="lazy" width="1440" height="900"><figcaption>資料與使用邊界 · v0.20 介面</figcaption></figure></section>
+<section class="chapter" id="download" aria-labelledby="title-download"><div class="chapter-head"><span class="chapter-number">06</span><h2 id="title-download">先試著用，<br>再往前一步。</h2><div class="chapter-copy"><span class="status">方案與下載</span><p>從 從 v0.20 免費試用開始，了解工程工作助手的使用方式。這是早期版本，正式方案與計價尚未公布。</p></div></div>
+<div class="details"><div class="pricing"><div class="price">NT$0</div><div><h3>v0.20 免費試用</h3><p>七位工程助手（估算、設計、採購、法規、工地日報、客戶溝通、知識庫）與任務進度、終端、預覽。雲端模型使用費依服務商規則另計。</p></div></div>
+<div class="download-row"><a class="pill dark" href="https://pub-f4cb008b17364d8b9911ec89fb7e1002.r2.dev/NClawPro-0.20.0-arm64.dmg">下載 macOS 版 ↗</a><span class="small">v0.20.0 · Apple Silicon · 約 212 MB · 已通過 Apple 公證</span></div>
+<div class="specs"><div><h3>系統需求</h3><ul><li>macOS 11 以上，Apple Silicon（M1 以後）</li><li>下載約 212 MB，安裝後約 600 MB 硬碟空間</li><li>需連網使用雲端模型</li></ul></div><div><h3>試用前，請先了解</h3><ul><li>七位工程助手皆為早期版本，工程判斷須由專業人員核對</li><li>知識庫可匯入自己的 Markdown 資料夾（如 Obsidian）</li><li>未提供儲值、計量與推薦碼</li><li>已通過 Apple 公證，雙擊即可開啟</li></ul></div></div>
+<details><summary>安裝與首次啟動</summary><ol><li>下載 DMG，雙擊掛載。</li><li>將 N+Claw Pro 拖到 Applications 資料夾。</li><li>雙擊 Applications 裡的 N+Claw Pro 開啟（已通過 Apple 公證）。</li><li>登入或輸入 N+Claw 連線金鑰後，從左側選一位工程助手開始對話。</li></ol></details><p class="notice">工程判斷仍須由專業人員核對。需要協助？<a href="mailto:support@nplusstar.ai">support@nplusstar.ai</a></p></div></section></main><footer><a href="https://nplusstar.ai/">N+Star · 恩加斯達國際</a><span>© 2026 · N+Claw Pro</span><a href="mailto:support@nplusstar.ai">聯繫支援 ↗</a></footer></body></html>
