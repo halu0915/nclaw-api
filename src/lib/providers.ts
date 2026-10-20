@@ -39,7 +39,7 @@ function toAnthropicMessages(messages: Array<Record<string, unknown>>): Array<Re
   return out;
 }
 
-const PROVIDER_CONFIGS: Record<Provider, ProviderConfig> = {
+export const PROVIDER_CONFIGS: Record<Provider, ProviderConfig> = {
   anthropic: {
     baseUrl: "https://api.anthropic.com/v1/messages",
     authHeader: (key) => ({
@@ -131,14 +131,48 @@ const PROVIDER_CONFIGS: Record<Provider, ProviderConfig> = {
         return String(content);
       };
 
+      // 工具呼叫：tool_call_id → 函式名稱（Gemini 的 functionResponse 要名稱、不吃 id）
+      const callNames = new Map<string, string>();
+      for (const m of messages) {
+        if (!Array.isArray(m.tool_calls)) continue;
+        for (const c of m.tool_calls as Array<{ id?: string; function?: { name?: string } }>) if (c?.id && c.function?.name) callNames.set(String(c.id), c.function.name);
+      }
+      const contents: Array<{ role: string; parts: Array<Record<string, unknown>> }> = [];
+      for (const m of messages.filter((x) => x.role !== "system")) {
+        const calls = m.tool_calls as Array<{ id: string; function: { name: string; arguments?: string } }> | undefined;
+        if (m.role === "tool") {
+          let response: unknown = m.content;
+          try { response = JSON.parse(String(m.content)); } catch { /* 非 JSON 原樣包起來 */ }
+          const part = { functionResponse: { name: callNames.get(String(m.tool_call_id)) ?? "tool", response: response && typeof response === "object" && !Array.isArray(response) ? response : { result: response } } };
+          const last = contents[contents.length - 1];
+          if (last?.role === "user" && last.parts.every((x) => x.functionResponse)) last.parts.push(part);
+          else contents.push({ role: "user", parts: [part] });
+        } else if (m.role === "assistant" && Array.isArray(calls) && calls.length) {
+          const parts: Array<Record<string, unknown>> = [];
+          const text = extractText(m.content);
+          if (text) parts.push({ text });
+          for (const c of calls) {
+            let args: unknown = {};
+            try { args = c.function.arguments ? JSON.parse(c.function.arguments) : {}; } catch { args = {}; }
+            parts.push({ functionCall: { name: c.function.name, args } });
+          }
+          contents.push({ role: "model", parts });
+        } else contents.push({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: extractText(m.content) }] });
+      }
+      const tools = body.tools as Array<{ function?: { name: string; description?: string; parameters?: unknown } }> | undefined;
+      const tc = body.tool_choice as string | { function?: { name?: string } } | undefined;
+      const toolFields = Array.isArray(tools) && tools.length && tc !== "none"
+        ? {
+            tools: [{ functionDeclarations: tools.filter((t) => t.function?.name).map((t) => ({ name: t.function!.name, description: t.function!.description ?? "", ...(t.function!.parameters ? { parameters: t.function!.parameters } : {}) })) }],
+            ...(tc === "required" ? { toolConfig: { functionCallingConfig: { mode: "ANY" } } }
+              : tc && typeof tc === "object" && tc.function?.name ? { toolConfig: { functionCallingConfig: { mode: "ANY", allowedFunctionNames: [tc.function.name] } } } : {}),
+          }
+        : {};
+
       return {
         _googleModel: providerModel,
-        contents: messages
-          .filter((m) => m.role !== "system")
-          .map((m) => ({
-            role: m.role === "assistant" ? "model" : "user",
-            parts: [{ text: extractText(m.content) }],
-          })),
+        contents,
+        ...toolFields,
         systemInstruction: (() => {
           const sys = messages.find((m) => m.role === "system");
           return sys ? { parts: [{ text: extractText(sys.content) }] } : undefined;
@@ -321,12 +355,16 @@ export function normalizeToOpenAI(
     const choices = candidates.map((c, idx) => {
       const content = c.content as Record<string, unknown> | undefined;
       const parts = (content?.parts as Array<Record<string, unknown>>) || [];
-      const text = parts.map((p) => String(p.text ?? "")).join("");
+      const text = parts.filter((p) => !p.thought).map((p) => String(p.text ?? "")).join("");
+      const toolCalls = parts.filter((p) => p.functionCall).map((p, i) => {
+        const fc = p.functionCall as { id?: string; name: string; args?: unknown };
+        return { id: fc.id || `call_${crypto.randomUUID().replace(/-/g, "").slice(0, 16)}_${i}`, type: "function", function: { name: fc.name, arguments: JSON.stringify(fc.args ?? {}) } };
+      });
       const finishReason = String(c.finishReason ?? "stop").toLowerCase();
       return {
         index: idx,
-        message: { role: "assistant", content: text },
-        finish_reason: finishReason === "stop" ? "stop" : finishReason,
+        message: toolCalls.length ? { role: "assistant", content: text || null, tool_calls: toolCalls } : { role: "assistant", content: text },
+        finish_reason: toolCalls.length ? "tool_calls" : finishReason === "stop" ? "stop" : finishReason === "max_tokens" ? "length" : finishReason,
       };
     });
     const meta = data.usageMetadata as Record<string, number> | undefined;
