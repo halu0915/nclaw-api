@@ -366,9 +366,10 @@ export async function POST(req: NextRequest) {
     // (Gemini/Anthropic workaround), emit response as a single SSE chunk.
     if (fakeStream) {
       const choices = (responseBody as Record<string, unknown>).choices as Array<Record<string, unknown>> | undefined;
-      const content = choices?.[0]?.message
-        ? ((choices[0].message as Record<string, unknown>).content as string) ?? ""
-        : "";
+      const msg = choices?.[0]?.message as Record<string, unknown> | undefined;
+      const content = (msg?.content as string) ?? "";
+      // 工具呼叫：串流格式的 tool_calls 每筆要帶 index
+      const toolCalls = (msg?.tool_calls as Array<Record<string, unknown>> | undefined)?.map((c, index) => ({ index, ...c }));
       const chunkId = `chatcmpl-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       const sseChunk = {
         id: chunkId,
@@ -378,8 +379,8 @@ export async function POST(req: NextRequest) {
         choices: [
           {
             index: 0,
-            delta: { role: "assistant", content },
-            finish_reason: "stop",
+            delta: toolCalls?.length ? { role: "assistant", content, tool_calls: toolCalls } : { role: "assistant", content },
+            finish_reason: (choices?.[0]?.finish_reason as string) || "stop",
           },
         ],
       };
