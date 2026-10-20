@@ -7,6 +7,38 @@ interface ProviderConfig {
   extractUsage: (data: Record<string, unknown>) => { inputTokens: number; outputTokens: number; cachedTokens: number };
 }
 
+/**
+ * OpenAI 訊息 → Anthropic 訊息：
+ * assistant.tool_calls → tool_use 區塊；role:"tool" → user 的 tool_result 區塊（連續多筆合併成一則）。
+ */
+function toAnthropicMessages(messages: Array<Record<string, unknown>>): Array<Record<string, unknown>> {
+  const out: Array<Record<string, unknown>> = [];
+  for (const m of messages) {
+    if (m.role === "tool") {
+      const block = { type: "tool_result", tool_use_id: String(m.tool_call_id ?? ""), content: typeof m.content === "string" ? m.content : JSON.stringify(m.content ?? "") };
+      const last = out[out.length - 1];
+      if (last?.role === "user" && Array.isArray(last.content) && (last.content as Array<Record<string, unknown>>).every((b) => b.type === "tool_result")) {
+        (last.content as Array<Record<string, unknown>>).push(block);
+      } else out.push({ role: "user", content: [block] });
+      continue;
+    }
+    const calls = m.tool_calls as Array<{ id: string; function: { name: string; arguments?: string } }> | undefined;
+    if (m.role === "assistant" && Array.isArray(calls) && calls.length) {
+      const blocks: Array<Record<string, unknown>> = [];
+      if (typeof m.content === "string" && m.content) blocks.push({ type: "text", text: m.content });
+      for (const c of calls) {
+        let input: unknown = {};
+        try { input = c.function.arguments ? JSON.parse(c.function.arguments) : {}; } catch { input = {}; }
+        blocks.push({ type: "tool_use", id: c.id, name: c.function.name, input });
+      }
+      out.push({ role: "assistant", content: blocks });
+      continue;
+    }
+    out.push({ role: m.role, content: m.content });
+  }
+  return out;
+}
+
 const PROVIDER_CONFIGS: Record<Provider, ProviderConfig> = {
   anthropic: {
     baseUrl: "https://api.anthropic.com/v1/messages",
@@ -28,16 +60,26 @@ const PROVIDER_CONFIGS: Record<Provider, ProviderConfig> = {
           }))
         : undefined;
 
-      return {
+      const out: Record<string, unknown> = {
         model: providerModel,
         max_tokens: (body.max_tokens as number) || 4096,
         stream: body.stream || false,
         system,
-        messages: nonSystemMessages.map((m) => ({
-          role: m.role,
-          content: m.content,
-        })),
+        messages: toAnthropicMessages(nonSystemMessages),
       };
+      // OpenAI tools → Anthropic tools（工具呼叫）
+      const tools = body.tools as Array<{ type?: string; function?: { name: string; description?: string; parameters?: unknown } }> | undefined;
+      if (Array.isArray(tools) && tools.length && body.tool_choice !== "none") {
+        out.tools = tools.filter((t) => t.function?.name).map((t) => ({
+          name: t.function!.name,
+          description: t.function!.description ?? "",
+          input_schema: t.function!.parameters ?? { type: "object", properties: {} },
+        }));
+        const tc = body.tool_choice as string | { function?: { name?: string } } | undefined;
+        if (tc === "required") out.tool_choice = { type: "any" };
+        else if (tc && typeof tc === "object" && tc.function?.name) out.tool_choice = { type: "tool", name: tc.function.name };
+      }
+      return out;
     },
     extractUsage: (data) => ({
       inputTokens: (data.usage as Record<string, number>)?.input_tokens || 0,
@@ -309,6 +351,11 @@ export function normalizeToOpenAI(
       .map((b) => String(b.text ?? ""))
       .join("");
     const usage = data.usage as Record<string, number> | undefined;
+    const toolCalls = contentBlocks
+      .filter((b) => b.type === "tool_use")
+      .map((b) => ({ id: String(b.id), type: "function", function: { name: String(b.name), arguments: JSON.stringify(b.input ?? {}) } }));
+    const stop = String(data.stop_reason ?? "end_turn");
+    const finish = stop === "tool_use" ? "tool_calls" : stop === "max_tokens" ? "length" : stop === "end_turn" || stop === "stop_sequence" ? "stop" : stop;
     return {
       id: String(data.id ?? `chatcmpl-${Date.now()}`),
       object: "chat.completion",
@@ -317,8 +364,10 @@ export function normalizeToOpenAI(
       choices: [
         {
           index: 0,
-          message: { role: "assistant", content: text },
-          finish_reason: String(data.stop_reason ?? "stop") === "end_turn" ? "stop" : String(data.stop_reason ?? "stop"),
+          message: toolCalls.length
+            ? { role: "assistant", content: text || null, tool_calls: toolCalls }
+            : { role: "assistant", content: text },
+          finish_reason: finish,
         },
       ],
       usage: {
