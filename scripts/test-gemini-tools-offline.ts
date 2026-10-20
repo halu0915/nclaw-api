@@ -21,5 +21,12 @@ async function main() {
   const p: any = normalizeToOpenAI("google", { candidates: [{ content: { parts: [{ text: "24.5 度" }] }, finishReason: "STOP" }] }, "m");
   assert.equal(p.choices[0].message.content, "24.5 度"); assert.equal(p.choices[0].finish_reason, "stop");
   console.log("response ok");
+  // Hermes P2：不明 id 不可撈到原型鍵、tool_calls 非陣列不拋錯、自產 id 不碰撞
+  const t2: any = cfg.transformRequest({ messages: [{ role: "assistant", content: "x", tool_calls: "bad" }, { role: "tool", tool_call_id: "constructor", content: "1" }] }, "m");
+  assert.equal(t2.contents[1].parts[0].functionResponse.name, "tool");
+  const resp = { candidates: [{ content: { parts: [{ functionCall: { name: "a" } }] }, finishReason: "STOP" }] };
+  const ids = new Set(Array.from({ length: 50 }, () => (normalizeToOpenAI("google", resp, "m") as any).choices[0].message.tool_calls[0].id));
+  assert.equal(ids.size, 50);
+  console.log("p2 ok");
 }
 main().catch((e) => { console.error(e); process.exit(1); });

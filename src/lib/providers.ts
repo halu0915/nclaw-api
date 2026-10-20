@@ -132,15 +132,18 @@ export const PROVIDER_CONFIGS: Record<Provider, ProviderConfig> = {
       };
 
       // 工具呼叫：tool_call_id → 函式名稱（Gemini 的 functionResponse 要名稱、不吃 id）
-      const callNames: Record<string, string> = {};
-      for (const m of messages) for (const c of (m.tool_calls as Array<{ id: string; function: { name: string } }> | undefined) ?? []) callNames[c.id] = c.function.name;
+      const callNames = new Map<string, string>();
+      for (const m of messages) {
+        if (!Array.isArray(m.tool_calls)) continue;
+        for (const c of m.tool_calls as Array<{ id?: string; function?: { name?: string } }>) if (c?.id && c.function?.name) callNames.set(String(c.id), c.function.name);
+      }
       const contents: Array<{ role: string; parts: Array<Record<string, unknown>> }> = [];
       for (const m of messages.filter((x) => x.role !== "system")) {
         const calls = m.tool_calls as Array<{ id: string; function: { name: string; arguments?: string } }> | undefined;
         if (m.role === "tool") {
           let response: unknown = m.content;
           try { response = JSON.parse(String(m.content)); } catch { /* 非 JSON 原樣包起來 */ }
-          const part = { functionResponse: { name: callNames[String(m.tool_call_id)] ?? "tool", response: response && typeof response === "object" && !Array.isArray(response) ? response : { result: response } } };
+          const part = { functionResponse: { name: callNames.get(String(m.tool_call_id)) ?? "tool", response: response && typeof response === "object" && !Array.isArray(response) ? response : { result: response } } };
           const last = contents[contents.length - 1];
           if (last?.role === "user" && last.parts.every((x) => x.functionResponse)) last.parts.push(part);
           else contents.push({ role: "user", parts: [part] });
@@ -355,7 +358,7 @@ export function normalizeToOpenAI(
       const text = parts.filter((p) => !p.thought).map((p) => String(p.text ?? "")).join("");
       const toolCalls = parts.filter((p) => p.functionCall).map((p, i) => {
         const fc = p.functionCall as { id?: string; name: string; args?: unknown };
-        return { id: fc.id || `call_${Date.now().toString(36)}_${i}`, type: "function", function: { name: fc.name, arguments: JSON.stringify(fc.args ?? {}) } };
+        return { id: fc.id || `call_${crypto.randomUUID().replace(/-/g, "").slice(0, 16)}_${i}`, type: "function", function: { name: fc.name, arguments: JSON.stringify(fc.args ?? {}) } };
       });
       const finishReason = String(c.finishReason ?? "stop").toLowerCase();
       return {
