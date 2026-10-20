@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // 實測：OpenAI 格式 tools → Anthropic → 回 OpenAI 格式 tool_calls → 帶 tool 結果再問一輪
 import { callProvider, normalizeToOpenAI } from "../src/lib/providers";
 const model = "anthropic/claude-sonnet-4-6";
