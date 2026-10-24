@@ -1,0 +1,28 @@
+# N+Claw（恩加斯達國際有限公司）
+
+> N+Claw 是台灣機電工程（MEP：機電、水電、消防）專用的 AI 產品線，由恩加斯達國際有限公司（N+Star International Co., Ltd.）開發。產品網站為 https://nclaw.nplusstar.ai ；給程式呼叫的 API 位址為 https://api.nplusstar.ai/v1 。
+
+## 產品
+
+- [N+Claw API](https://nclaw.nplusstar.ai/)：機電工程 AI API。相容 OpenAI 格式，把 base_url 改成 https://api.nplusstar.ai/v1 即可沿用既有程式碼；一組 API Key 可使用 Claude、GPT-4o、Gemini、Llama、Qwen、DeepSeek 等模型。
+- [N+Claw Pro](https://nclaw.nplusstar.ai/pro)：工程業桌面工作助手（macOS，Apple Silicon）。v0.20 免費試用，內建七位工程助手（估算、設計、採購、法規、工地日報、客戶溝通、知識庫），可匯入自己的 Markdown 資料夾建立知識庫。早期版本，工程判斷須由專業人員核對。
+- [N+Claw Bot](https://nclaw.nplusstar.ai/bot)：給沒有 IT 部門的工程公司用的 Telegram AI 助手。公司一張合約一個啟用碼，員工在 Telegram 加入 bot 即可查規範、查廠商、寫報告、看圖。
+- [線上聊天試用](https://nclaw.nplusstar.ai/chat)：在瀏覽器直接與多模型 AI 對話，測試機電工程問題。
+
+## API 端點
+
+- POST /v1/chat/completions：對話補全（支援串流）
+- GET /v1/models：列出可用模型
+
+## 定價（N+Claw API，月費，新台幣）
+
+- 輕量版 NT$2,990：3 個 Agent、10 RPM、每月 1M tokens
+- 標準版 NT$9,900：5 個 Agent、30 RPM、每月 5M tokens
+- 專業版 NT$29,900：7 個 Agent、100 RPM、每月 20M tokens
+- 企業版：客製化，請聯繫我們
+- 14 天免費試用，隨時可升降級
+
+## 聯絡
+
+- 公司網站：https://nplusstar.ai
+- 支援信箱：support@nplusstar.ai
