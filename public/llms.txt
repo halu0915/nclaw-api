@@ -4,7 +4,7 @@
 
 ## 產品
 
-- [N+Claw API](https://nclaw.nplusstar.ai/)：機電工程 AI API。相容 OpenAI 格式，把 base_url 改成 https://api.nplusstar.ai/v1 即可沿用既有程式碼；一組 API Key 可使用 Claude、GPT-4o、Gemini、Llama、Qwen、DeepSeek 等模型；內建機電工程知識庫，涵蓋估算、法規合規、材料規格。
+- [N+Claw API](https://nclaw.nplusstar.ai/)：機電工程 AI API。相容 OpenAI 格式，把 base_url 改成 https://api.nplusstar.ai/v1 即可沿用既有程式碼；一組 API Key 可使用 Claude、GPT-4o、Gemini、Llama、Qwen、DeepSeek 等模型。
 - [N+Claw Pro](https://nclaw.nplusstar.ai/pro)：工程業桌面工作助手（macOS，Apple Silicon）。v0.20 免費試用，內建七位工程助手（估算、設計、採購、法規、工地日報、客戶溝通、知識庫），可匯入自己的 Markdown 資料夾建立知識庫。早期版本，工程判斷須由專業人員核對。
 - [N+Claw Bot](https://nclaw.nplusstar.ai/bot)：給沒有 IT 部門的工程公司用的 Telegram AI 助手。公司一張合約一個啟用碼，員工在 Telegram 加入 bot 即可查規範、查廠商、寫報告、看圖。
 - [線上聊天試用](https://nclaw.nplusstar.ai/chat)：在瀏覽器直接與多模型 AI 對話，測試機電工程問題。
