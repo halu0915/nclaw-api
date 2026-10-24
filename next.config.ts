@@ -29,6 +29,24 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       // api.nplusstar.ai is API endpoint only — non-API routes redirect to nclaw.nplusstar.ai
+      // 機器用路徑（/v1、/api、/monitoring、/robots.txt、靜態資源）一律不轉
+      ...[
+        "/",
+        "/plans",
+        "/billing",
+        "/auth-error",
+        "/credits/:path*",
+        "/dashboard/:path+",
+        "/pro/:path+",
+        "/bot/:path+",
+        "/sitemap.xml",
+        "/llms.txt",
+      ].map((source) => ({
+        source,
+        has: [{ type: "host" as const, value: "api.nplusstar.ai" }],
+        destination: `https://nclaw.nplusstar.ai${source}`,
+        permanent: true,
+      })),
       {
         source: "/pro",
         has: [{ type: "host", value: "api.nplusstar.ai" }],
