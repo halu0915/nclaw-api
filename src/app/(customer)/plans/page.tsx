@@ -10,7 +10,7 @@ interface CustomerData {
 }
 
 const plans = [
-  { id: "free", name: "免費試用", price: 0, agents: 1, rpm: 5, tokens: "100K", features: ["單一模型", "公開知識庫", "網頁聊天室"] },
+  { id: "free", name: "入門版", price: 0, agents: 1, rpm: 5, tokens: "100K", features: ["單一模型", "公開知識庫", "網頁聊天室"] },
   { id: "light", name: "輕量版", price: 2990, agents: 3, rpm: 10, tokens: "1M", features: ["3 個 Agent", "公開知識庫", "Telegram Bot", "Email 支援"] },
   { id: "standard", name: "標準版", price: 9900, agents: 5, rpm: 30, tokens: "5M", features: ["5 個 Agent", "訂閱知識庫", "Telegram + Line Bot", "圖片分析", "報告產出"] },
   { id: "pro", name: "專業版", price: 29900, agents: 7, rpm: 100, tokens: "20M", features: ["7 個 Agent（全部）", "完整知識庫 + 私有", "全平台 Bot", "所有技能", "優先支援", "專屬客服"], popular: true },
