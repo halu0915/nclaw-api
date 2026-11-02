@@ -58,7 +58,7 @@ export default function PlansPage() {
     <div>
       <div className="text-center mb-12">
         <h1 className="text-3xl font-bold mb-3">選擇適合你的方案</h1>
-        <p className="text-gray-400">14 天免費試用，隨時可升級或降級</p>
+        <p className="text-gray-400">隨時可升級或降級</p>
       </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">

@@ -230,7 +230,7 @@ export default function Home() {
         {/* Pricing */}
         <div className="mb-24">
           <h2 className="text-3xl font-bold text-center mb-3 bg-gradient-to-r from-white via-amber-100 to-amber-300 bg-clip-text text-transparent">{l.pricing}</h2>
-          <p className="text-center text-gray-500 text-sm mb-10">{lang === "zh" ? "14 天免費試用，隨時可升降級" : "14-day free trial, upgrade or downgrade anytime"}</p>
+          <p className="text-center text-gray-500 text-sm mb-10">{lang === "zh" ? "隨時可升降級" : "Upgrade or downgrade anytime"}</p>
           <div className="grid md:grid-cols-4 gap-4">
             {plans.map((plan) => (
               <div
