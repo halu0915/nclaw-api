@@ -41,7 +41,7 @@ export default function PlansPage() {
   const subscribe = async (planId: string) => {
     if (planId !== "free") {
       const name = plans.find((p) => p.id === planId)?.name ?? planId;
-      window.open(`mailto:halu0915@gmail.com?subject=${encodeURIComponent(`N+Claw ${name}洽詢`)}`, "_blank");
+      window.location.assign(`mailto:support@nplusstar.ai?subject=${encodeURIComponent(`N+Claw API ${name} 方案洽詢`)}`);
       return;
     }
 
