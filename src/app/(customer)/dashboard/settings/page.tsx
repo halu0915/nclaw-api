@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useCustomer } from "../../layout";
 
 const PLAN_LABELS: Record<string, string> = {
-  free: "免費試用",
+  free: "入門版",
   light: "輕量版",
   standard: "標準版",
   pro: "專業版",

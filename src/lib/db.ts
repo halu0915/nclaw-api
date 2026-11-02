@@ -48,7 +48,15 @@ function getPool(): Pool {
   return pool;
 }
 
-export const pool = getPool();
+// Lazy: build 階段（收集頁面資料）只 import 不查詢，沒有 DATABASE_URL 也能建置；
+// 第一次真的用到連線時才建立 pool，缺 DATABASE_URL 一樣會丟錯。
+export const pool: Pool = new Proxy({} as Pool, {
+  get(_target, prop) {
+    const real = getPool();
+    const value = Reflect.get(real, prop, real);
+    return typeof value === "function" ? value.bind(real) : value;
+  },
+});
 
 /**
  * Convenience wrapper around `pool.query`.
@@ -60,7 +68,7 @@ export async function query<T extends QueryResultRow = QueryResultRow>(
   text: string,
   params?: unknown[]
 ) {
-  return pool.query<T>(text, params);
+  return getPool().query<T>(text, params);
 }
 
 export default pool;

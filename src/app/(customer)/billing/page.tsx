@@ -21,7 +21,7 @@ interface BillingMonth {
 }
 
 const PLAN_LABELS: Record<string, string> = {
-  free: "免費試用", light: "輕量版", standard: "標準版", pro: "專業版", enterprise: "企業版",
+  free: "入門版", light: "輕量版", standard: "標準版", pro: "專業版", enterprise: "企業版",
 };
 
 const PLAN_PRICES: Record<string, number> = {

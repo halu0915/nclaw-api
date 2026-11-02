@@ -55,13 +55,6 @@ const jsonLd = {
       description:
         "台灣機電工程專用的 AI 介面。估算、法規查詢、報價，相容 OpenAI 格式，可直接接入既有系統。",
       publisher: { "@id": "https://nplusstar.ai/#organization" },
-      offers: {
-        "@type": "AggregateOffer",
-        priceCurrency: "TWD",
-        lowPrice: 2990,
-        highPrice: 29900,
-        offerCount: 3,
-      },
     },
   ],
 };
