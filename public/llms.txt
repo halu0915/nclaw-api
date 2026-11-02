@@ -14,12 +14,12 @@
 - POST /v1/chat/completions：對話補全（支援串流）
 - GET /v1/models：列出可用模型
 
-## 定價（N+Claw API，月費，新台幣）
+## 服務方案（N+Claw API，價格請洽詢）
 
-- 輕量版 NT$2,990：3 個 Agent、10 RPM、每月 1M tokens
-- 標準版 NT$9,900：5 個 Agent、30 RPM、每月 5M tokens
-- 專業版 NT$29,900：7 個 Agent、100 RPM、每月 20M tokens
-- 企業版：客製化，請聯繫我們
+- 輕量版（請洽詢）：3 個 Agent、10 RPM、每月 1M tokens
+- 標準版（請洽詢）：5 個 Agent、30 RPM、每月 5M tokens
+- 專業版（請洽詢）：7 個 Agent、100 RPM、每月 20M tokens
+- 企業版（請洽詢）：客製化
 - 14 天免費試用，隨時可升降級
 
 ## 聯絡

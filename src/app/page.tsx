@@ -119,10 +119,10 @@ export default function Home() {
     : ["Estimate plumbing costs for 3F residential", "Query fire protection regulations", "Compare PVC vs stainless steel pipes", "Generate engineering quotations"];
 
   const plans = [
-    { name: l.light, price: "2,990", agents: `3 ${l.agents}`, rpm: "10 RPM", tokens: "1M tokens/mo" },
-    { name: l.standard, price: "9,900", agents: `5 ${l.agents}`, rpm: "30 RPM", tokens: "5M tokens/mo" },
-    { name: l.pro, price: "29,900", agents: `7 ${l.agents}`, rpm: "100 RPM", tokens: "20M tokens/mo" },
-    { name: l.enterprise, price: "Contact", agents: l.custom, rpm: "500+ RPM", tokens: l.unlimited },
+    { name: l.light, agents: `3 ${l.agents}`, rpm: "10 RPM", tokens: "1M tokens/mo" },
+    { name: l.standard, agents: `5 ${l.agents}`, rpm: "30 RPM", tokens: "5M tokens/mo" },
+    { name: l.pro, agents: `7 ${l.agents}`, rpm: "100 RPM", tokens: "20M tokens/mo" },
+    { name: l.enterprise, agents: l.custom, rpm: "500+ RPM", tokens: l.unlimited },
   ];
 
   return (
@@ -246,23 +246,20 @@ export default function Home() {
                 )}
                 <h3 className="text-lg font-semibold mt-1">{plan.name}</h3>
                 <div className="text-2xl font-bold my-3">
-                  {plan.price === "Contact" ? l.contact : `NT$${plan.price}`}
-                  {plan.price !== "Contact" && (
-                    <span className="text-sm text-gray-400 font-normal">/mo</span>
-                  )}
+                  {lang === "zh" ? "請洽詢" : "Contact us"}
                 </div>
                 <ul className="space-y-2 text-sm text-gray-400">
                   <li>{plan.agents}</li>
                   <li>{plan.rpm}</li>
                   <li>{plan.tokens}</li>
                 </ul>
-                <Link href="/register" className={`block mt-4 text-center py-2 rounded-lg text-sm font-medium transition-colors ${
+                <a href={`mailto:support@nplusstar.ai?subject=${encodeURIComponent(`N+Claw API ${plan.name} 方案洽詢`)}`} className={`block mt-4 text-center py-2 rounded-lg text-sm font-medium transition-colors ${
                   plan.name === l.pro
                     ? "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-gray-900 shadow shadow-amber-500/30"
                     : "border border-white/10 hover:bg-white/5 text-gray-300"
                 }`}>
-                  {lang === "zh" ? "開始使用" : "Get Started"}
-                </Link>
+                  {l.contact}
+                </a>
               </div>
             ))}
           </div>

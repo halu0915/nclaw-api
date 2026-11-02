@@ -39,8 +39,9 @@ export default function PlansPage() {
   }, []);
 
   const subscribe = async (planId: string) => {
-    if (planId === "enterprise") {
-      window.open("mailto:halu0915@gmail.com?subject=N%2BClaw%20企業版洽詢", "_blank");
+    if (planId !== "free") {
+      const name = plans.find((p) => p.id === planId)?.name ?? planId;
+      window.open(`mailto:halu0915@gmail.com?subject=${encodeURIComponent(`N+Claw ${name}洽詢`)}`, "_blank");
       return;
     }
 
@@ -73,8 +74,7 @@ export default function PlansPage() {
               )}
               <h3 className="text-lg font-semibold">{plan.name}</h3>
               <div className="text-2xl font-bold my-3">
-                {plan.price === -1 ? "聯繫我們" : plan.price === 0 ? "免費" : `NT$${plan.price.toLocaleString()}`}
-                {plan.price > 0 && <span className="text-sm text-gray-400 font-normal">/月</span>}
+                {plan.price === 0 ? "免費" : "請洽詢"}
               </div>
 
               <ul className="space-y-2 text-sm text-gray-400 mb-6 flex-1">
@@ -98,7 +98,7 @@ export default function PlansPage() {
                       : "border border-gray-700 hover:bg-gray-800"
                   } disabled:opacity-50`}
                 >
-                  {loading === plan.id ? "處理中..." : plan.price === -1 ? "聯繫業務" : currentPlan === "free" ? "開始使用" : "切換方案"}
+                  {loading === plan.id ? "處理中..." : plan.id !== "free" ? "聯繫業務" : currentPlan === "free" ? "開始使用" : "切換方案"}
                 </button>
               )}
             </div>
