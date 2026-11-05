@@ -7,6 +7,51 @@ interface ProviderConfig {
   extractUsage: (data: Record<string, unknown>) => { inputTokens: number; outputTokens: number; cachedTokens: number };
 }
 
+/**
+ * OpenAI 訊息 → Anthropic 訊息：
+ * assistant.tool_calls → tool_use 區塊；role:"tool" → user 的 tool_result 區塊（連續多筆合併成一則）。
+ */
+function toAnthropicMessages(messages: Array<Record<string, unknown>>): Array<Record<string, unknown>> {
+  const out: Array<Record<string, unknown>> = [];
+  for (const m of messages) {
+    if (m.role === "tool") {
+      // OpenAI 工具結果可為字串或 [{type:"text",text}] 陣列；陣列轉成 Anthropic text 區塊，其他形狀保留成 JSON 文字
+      const content = typeof m.content === "string" ? m.content
+        : Array.isArray(m.content) ? (m.content as unknown[]).map((p) =>
+            typeof p === "string" ? { type: "text", text: p }
+            : p && typeof p === "object" && typeof (p as Record<string, unknown>).text === "string" ? { type: "text", text: (p as Record<string, unknown>).text as string }
+            : { type: "text", text: JSON.stringify(p) }).filter((b) => b.text)
+        : JSON.stringify(m.content ?? "");
+      const block = { type: "tool_result", tool_use_id: String(m.tool_call_id ?? ""), content };
+      const last = out[out.length - 1];
+      if (last?.role === "user" && Array.isArray(last.content) && (last.content as Array<Record<string, unknown>>).every((b) => b.type === "tool_result")) {
+        (last.content as Array<Record<string, unknown>>).push(block);
+      } else out.push({ role: "user", content: [block] });
+      continue;
+    }
+    const calls = m.tool_calls as Array<{ id: string; function: { name: string; arguments?: string } }> | undefined;
+    if (m.role === "assistant" && Array.isArray(calls) && calls.length) {
+      const blocks: Array<Record<string, unknown>> = [];
+      if (typeof m.content === "string" && m.content) blocks.push({ type: "text", text: m.content });
+      else if (Array.isArray(m.content)) {   // OpenAI 也允許 [{type:"text",text}] 陣列；保留文字，空字串略過（Anthropic 不收空 text）
+        for (const p of m.content as unknown[]) {
+          const text = typeof p === "string" ? p : p && typeof p === "object" ? (p as Record<string, unknown>).text : undefined;
+          if (typeof text === "string" && text) blocks.push({ type: "text", text });
+        }
+      }
+      for (const c of calls) {
+        let input: unknown = {};
+        try { input = c.function.arguments ? JSON.parse(c.function.arguments) : {}; } catch { input = {}; }
+        blocks.push({ type: "tool_use", id: c.id, name: c.function.name, input });
+      }
+      out.push({ role: "assistant", content: blocks });
+      continue;
+    }
+    out.push({ role: m.role, content: m.content });
+  }
+  return out;
+}
+
 const PROVIDER_CONFIGS: Record<Provider, ProviderConfig> = {
   anthropic: {
     baseUrl: "https://api.anthropic.com/v1/messages",
@@ -28,16 +73,32 @@ const PROVIDER_CONFIGS: Record<Provider, ProviderConfig> = {
           }))
         : undefined;
 
-      return {
+      const out: Record<string, unknown> = {
         model: providerModel,
         max_tokens: (body.max_tokens as number) || 4096,
         stream: body.stream || false,
         system,
-        messages: nonSystemMessages.map((m) => ({
-          role: m.role,
-          content: m.content,
-        })),
+        messages: toAnthropicMessages(nonSystemMessages),
       };
+      // OpenAI tools → Anthropic tools（工具呼叫）
+      const tools = body.tools as Array<{ type?: string; function?: { name: string; description?: string; parameters?: unknown; strict?: boolean } }> | undefined;
+      if (Array.isArray(tools) && tools.length) {   // tool_choice:"none" 也要保留工具定義：歷史裡有 tool_use／tool_result 時 Anthropic 需要定義
+        out.tools = tools.filter((t) => t.function?.name).map((t) => ({
+          name: t.function!.name,
+          description: t.function!.description ?? "",
+          input_schema: t.function!.parameters ?? { type: "object", properties: {} },
+          ...(t.function!.strict === true ? { strict: true } : {}),
+        }));
+        const tc = body.tool_choice as string | { function?: { name?: string } } | undefined;
+        let choice: Record<string, unknown> | undefined;
+        if (tc === "none") choice = { type: "none" };
+        else if (tc === "required") choice = { type: "any" };
+        else if (tc && typeof tc === "object" && tc.function?.name) choice = { type: "tool", name: tc.function.name };
+        // OpenAI parallel_tool_calls:false → Anthropic tool_choice.disable_parallel_tool_use
+        if (body.parallel_tool_calls === false && choice?.type !== "none") choice = { ...(choice ?? { type: "auto" }), disable_parallel_tool_use: true };
+        if (choice) out.tool_choice = choice;
+      }
+      return out;
     },
     extractUsage: (data) => ({
       inputTokens: (data.usage as Record<string, number>)?.input_tokens || 0,
@@ -309,6 +370,11 @@ export function normalizeToOpenAI(
       .map((b) => String(b.text ?? ""))
       .join("");
     const usage = data.usage as Record<string, number> | undefined;
+    const toolCalls = contentBlocks
+      .filter((b) => b.type === "tool_use")
+      .map((b) => ({ id: String(b.id), type: "function", function: { name: String(b.name), arguments: JSON.stringify(b.input ?? {}) } }));
+    const stop = String(data.stop_reason ?? "end_turn");
+    const finish = stop === "tool_use" ? "tool_calls" : stop === "max_tokens" ? "length" : stop === "end_turn" || stop === "stop_sequence" ? "stop" : stop;
     return {
       id: String(data.id ?? `chatcmpl-${Date.now()}`),
       object: "chat.completion",
@@ -317,8 +383,10 @@ export function normalizeToOpenAI(
       choices: [
         {
           index: 0,
-          message: { role: "assistant", content: text },
-          finish_reason: String(data.stop_reason ?? "stop") === "end_turn" ? "stop" : String(data.stop_reason ?? "stop"),
+          message: toolCalls.length
+            ? { role: "assistant", content: text || null, tool_calls: toolCalls }
+            : { role: "assistant", content: text },
+          finish_reason: finish,
         },
       ],
       usage: {
