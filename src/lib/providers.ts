@@ -15,7 +15,14 @@ function toAnthropicMessages(messages: Array<Record<string, unknown>>): Array<Re
   const out: Array<Record<string, unknown>> = [];
   for (const m of messages) {
     if (m.role === "tool") {
-      const block = { type: "tool_result", tool_use_id: String(m.tool_call_id ?? ""), content: typeof m.content === "string" ? m.content : JSON.stringify(m.content ?? "") };
+      // OpenAI 工具結果可為字串或 [{type:"text",text}] 陣列；陣列轉成 Anthropic text 區塊，其他形狀保留成 JSON 文字
+      const content = typeof m.content === "string" ? m.content
+        : Array.isArray(m.content) ? (m.content as unknown[]).map((p) =>
+            typeof p === "string" ? { type: "text", text: p }
+            : p && typeof p === "object" && typeof (p as Record<string, unknown>).text === "string" ? { type: "text", text: (p as Record<string, unknown>).text as string }
+            : { type: "text", text: JSON.stringify(p) })
+        : JSON.stringify(m.content ?? "");
+      const block = { type: "tool_result", tool_use_id: String(m.tool_call_id ?? ""), content };
       const last = out[out.length - 1];
       if (last?.role === "user" && Array.isArray(last.content) && (last.content as Array<Record<string, unknown>>).every((b) => b.type === "tool_result")) {
         (last.content as Array<Record<string, unknown>>).push(block);
@@ -68,16 +75,21 @@ const PROVIDER_CONFIGS: Record<Provider, ProviderConfig> = {
         messages: toAnthropicMessages(nonSystemMessages),
       };
       // OpenAI tools → Anthropic tools（工具呼叫）
-      const tools = body.tools as Array<{ type?: string; function?: { name: string; description?: string; parameters?: unknown } }> | undefined;
+      const tools = body.tools as Array<{ type?: string; function?: { name: string; description?: string; parameters?: unknown; strict?: boolean } }> | undefined;
       if (Array.isArray(tools) && tools.length && body.tool_choice !== "none") {
         out.tools = tools.filter((t) => t.function?.name).map((t) => ({
           name: t.function!.name,
           description: t.function!.description ?? "",
           input_schema: t.function!.parameters ?? { type: "object", properties: {} },
+          ...(t.function!.strict === true ? { strict: true } : {}),
         }));
         const tc = body.tool_choice as string | { function?: { name?: string } } | undefined;
-        if (tc === "required") out.tool_choice = { type: "any" };
-        else if (tc && typeof tc === "object" && tc.function?.name) out.tool_choice = { type: "tool", name: tc.function.name };
+        let choice: Record<string, unknown> | undefined;
+        if (tc === "required") choice = { type: "any" };
+        else if (tc && typeof tc === "object" && tc.function?.name) choice = { type: "tool", name: tc.function.name };
+        // OpenAI parallel_tool_calls:false → Anthropic tool_choice.disable_parallel_tool_use
+        if (body.parallel_tool_calls === false) choice = { ...(choice ?? { type: "auto" }), disable_parallel_tool_use: true };
+        if (choice) out.tool_choice = choice;
       }
       return out;
     },
