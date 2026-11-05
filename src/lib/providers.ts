@@ -82,7 +82,7 @@ const PROVIDER_CONFIGS: Record<Provider, ProviderConfig> = {
       };
       // OpenAI tools → Anthropic tools（工具呼叫）
       const tools = body.tools as Array<{ type?: string; function?: { name: string; description?: string; parameters?: unknown; strict?: boolean } }> | undefined;
-      if (Array.isArray(tools) && tools.length && body.tool_choice !== "none") {
+      if (Array.isArray(tools) && tools.length) {   // tool_choice:"none" 也要保留工具定義：歷史裡有 tool_use／tool_result 時 Anthropic 需要定義
         out.tools = tools.filter((t) => t.function?.name).map((t) => ({
           name: t.function!.name,
           description: t.function!.description ?? "",
@@ -91,10 +91,11 @@ const PROVIDER_CONFIGS: Record<Provider, ProviderConfig> = {
         }));
         const tc = body.tool_choice as string | { function?: { name?: string } } | undefined;
         let choice: Record<string, unknown> | undefined;
-        if (tc === "required") choice = { type: "any" };
+        if (tc === "none") choice = { type: "none" };
+        else if (tc === "required") choice = { type: "any" };
         else if (tc && typeof tc === "object" && tc.function?.name) choice = { type: "tool", name: tc.function.name };
         // OpenAI parallel_tool_calls:false → Anthropic tool_choice.disable_parallel_tool_use
-        if (body.parallel_tool_calls === false) choice = { ...(choice ?? { type: "auto" }), disable_parallel_tool_use: true };
+        if (body.parallel_tool_calls === false && choice?.type !== "none") choice = { ...(choice ?? { type: "auto" }), disable_parallel_tool_use: true };
         if (choice) out.tool_choice = choice;
       }
       return out;
