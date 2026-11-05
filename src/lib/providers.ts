@@ -20,7 +20,7 @@ function toAnthropicMessages(messages: Array<Record<string, unknown>>): Array<Re
         : Array.isArray(m.content) ? (m.content as unknown[]).map((p) =>
             typeof p === "string" ? { type: "text", text: p }
             : p && typeof p === "object" && typeof (p as Record<string, unknown>).text === "string" ? { type: "text", text: (p as Record<string, unknown>).text as string }
-            : { type: "text", text: JSON.stringify(p) })
+            : { type: "text", text: JSON.stringify(p) }).filter((b) => b.text)
         : JSON.stringify(m.content ?? "");
       const block = { type: "tool_result", tool_use_id: String(m.tool_call_id ?? ""), content };
       const last = out[out.length - 1];
@@ -33,6 +33,12 @@ function toAnthropicMessages(messages: Array<Record<string, unknown>>): Array<Re
     if (m.role === "assistant" && Array.isArray(calls) && calls.length) {
       const blocks: Array<Record<string, unknown>> = [];
       if (typeof m.content === "string" && m.content) blocks.push({ type: "text", text: m.content });
+      else if (Array.isArray(m.content)) {   // OpenAI 也允許 [{type:"text",text}] 陣列；保留文字，空字串略過（Anthropic 不收空 text）
+        for (const p of m.content as unknown[]) {
+          const text = typeof p === "string" ? p : p && typeof p === "object" ? (p as Record<string, unknown>).text : undefined;
+          if (typeof text === "string" && text) blocks.push({ type: "text", text });
+        }
+      }
       for (const c of calls) {
         let input: unknown = {};
         try { input = c.function.arguments ? JSON.parse(c.function.arguments) : {}; } catch { input = {}; }
